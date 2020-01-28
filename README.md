@@ -11,5 +11,5 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * `A / D    - turn left/right`
 * `Q / E    - strafe left/right`
 
-<img alt="Description" src="https://github.com/PavelVavruska/raycaster/blob/master/raycaster_20200128.png">
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200128.png">
 28.01.2020 version - POC Python Ray caster
