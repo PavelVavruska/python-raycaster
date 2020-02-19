@@ -1,5 +1,5 @@
 # python-raycaster
-POC Python Raycaster on Tkinter
+POC Python Raycaster on Pygame
 
 Raycaster engine is inspired by 90's PC games. It takes three inputs: 
 * 2D array representing the map 
@@ -11,5 +11,9 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * `A / D    - turn left/right`
 * `Q / E    - strafe left/right`
 
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200219.png">
+19.02.2020 version - engine migrated from Tkinter to Pygame, big cleanup of code
+
+
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200128.png">
-28.01.2020 version - POC Python Ray caster
+28.01.2020 version - POC Python Tkinter Ray caster
