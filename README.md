@@ -7,9 +7,10 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 
 ## How to play
 
-* `W / S    - move forward/backward`
-* `A / D    - turn left/right`
-* `Q / E    - strafe left/right`
+* `W / S     - move forward/backward`
+* `A / D     - turn left/right`
+* `Q / E     - strafe left/right`
+* `UP / DOWN - level of detail
 
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200219.png">
 19.02.2020 version - engine migrated from Tkinter to Pygame, big cleanup of code
