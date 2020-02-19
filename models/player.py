@@ -20,6 +20,7 @@
 MAX_VELOCITY_ANGLE = 5
 MAX_VELOCITY_STEP = 1
 
+
 class Player(object):
     def __init__(self, x, y, angle):
         self.__x = x
