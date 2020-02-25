@@ -69,14 +69,6 @@ def main():
     # Initialise screen
     pygame.display.set_caption('Pygame - pixel by pixel raycaster')
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    # Fill background
-    background = pygame.Surface(screen.get_size())
-    background = background.convert()
-    #background.fill((0, 0, 0))
-    # Initialise players
-    # Blit everything to the screen
-    screen.blit(background, (0, 0))
-    pygame.display.flip()
     clock = pygame.time.Clock() # initialise clock
     pygame.key.set_repeat(True)  # enable key holding
 
@@ -154,14 +146,14 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
         if entry[0] < 1:
             continue
         start = int(WINDOW_HEIGHT / 2 - WINDOW_HEIGHT / (entry[0]*2))
-        wall_vertical_length = int(2 * WINDOW_HEIGHT / (entry[0]*2))
+        wall_vertical_length_full = 2 * WINDOW_HEIGHT / (entry[0]*2)
 
-        size_of_texture_pixel = int(wall_vertical_length / 64)
+        size_of_texture_pixel = int(wall_vertical_length_full / 64)
         one_artificial_pixel_size = size_of_texture_pixel if size_of_texture_pixel>0 else 1
 
         last_pixel_position = None
-        for vertical_wall_pixel in range(0, wall_vertical_length, one_artificial_pixel_size):
-            y_cor_texture = 64 + 64/wall_vertical_length*vertical_wall_pixel
+        for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
+            y_cor_texture = int(64 + 64/wall_vertical_length_full*vertical_wall_pixel)
             x_cor_texture = int(entry[1] * 64)
 
             if x_cor_texture <= 1:
@@ -176,11 +168,11 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
                 blue -= distance_dark_blue if blue > distance_dark_blue else blue
 
             result_color_string = (red, green, blue)
-            # colors skipped
 
             current_pixel_position = start + vertical_wall_pixel
             for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1), int(current_pixel_position)):
-                __canvas[screen_x, y] = result_color_string
+                for a in range(1 if DETAIL_LEVEL < 1 else DETAIL_LEVEL):
+                    __canvas[screen_x+a, y] = result_color_string
             last_pixel_position = current_pixel_position
         break
     del __canvas
@@ -344,4 +336,5 @@ def draw_scene():
         draw_from_z_buffer_wall(z_buffer_wall, screen_x, 0, 0)
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
