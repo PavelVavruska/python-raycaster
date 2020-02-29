@@ -20,10 +20,21 @@
 
 class Config(object):
 
-    def __init__(self, fov, is_perspective_correction_on, is_metric_on):
+    def __init__(
+            self,
+            fov,
+            is_perspective_correction_on,
+            is_metric_on,
+            pixel_size,
+            dynamic_lighting,
+            texture_filtering
+    ):
         self.__fov = fov
         self.__is_perspective_correction_on = is_perspective_correction_on
         self.__is_metric_on = is_metric_on
+        self.__pixel_size = pixel_size
+        self.__dynamic_lighting = dynamic_lighting
+        self.__texture_filtering = texture_filtering
 
     @property
     def fov(self):
@@ -37,14 +48,46 @@ class Config(object):
     def is_metric_on(self):
         return self.__is_metric_on
 
+    @property
+    def pixel_size(self):
+        return self.__pixel_size
+
+    @property
+    def dynamic_lighting(self):
+        return self.__dynamic_lighting
+
+    @property
+    def texture_filtering(self):
+        return self.__texture_filtering
+
     def set_fov(self, fov):
         self.__fov = fov
 
     def toggle_perspective_correction_on(self):
-        self.is_perspective_correction_on = not self.is_perspective_correction_on
+        self.__is_perspective_correction_on = not self.is_perspective_correction_on
 
     def toggle_metric_on(self):
         self.__is_metric_on = not self.__is_metric_on
+
+    def set_pixel_size(self, pixel_size):
+        self.__pixel_size = pixel_size
+
+    def increase_pixel_size(self):
+        if self.pixel_size < 10:
+            self.__pixel_size = self.pixel_size + 1
+
+    def decrease_pixel_size(self):
+        if self.pixel_size > 1:
+            self.__pixel_size = self.pixel_size - 1
+
+    def toggle_dynamic_lighting(self):
+        self.__dynamic_lighting = not self.__dynamic_lighting
+
+    def toggle_texture_filtering(self):
+        self.__texture_filtering = not self.__texture_filtering
+
+
+
 
 
 

@@ -17,7 +17,6 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-
 import math
 import pygame
 import pygame.locals as pylocs
@@ -39,7 +38,6 @@ start_frame_switcher = 0
 MICROSECONDS_IN_SECOND = 1_000_000
 NANOSECONDS_IN_SECOND = 1_000_000_000
 MULTIPLICATOR_MINIMAP = 5
-DRAW_EVERY_XTH_VLINE = 2
 
 COLOR_WHITE = (255, 255, 255)  # '#FFFFFF'
 COLOR_BLACK = (0, 0, 0)  # '#000000'
@@ -48,10 +46,15 @@ COLOR_GREEN = (0, 255, 0)  # '#00FF00'
 COLOR_RED = (255, 0, 0)  # '#FF0000'
 COLOR_GRAY = (50, 50, 50)
 
-DETAIL_LEVEL = 2  # 1 - HIGHEST, 2 - MEDIUM, 3 - LOW, 4+ EVEN LOWER
-
 player = Player(3, 3, 100)
-config = Config(100, True, True)
+config = Config(
+    fov=100,
+    is_perspective_correction_on=True,
+    is_metric_on=True,
+    pixel_size=2,
+    dynamic_lighting=True,
+    texture_filtering=True
+)
 game_map = Map()
 
 mini_map_offset_x = WINDOW_WIDTH - game_map.size_x*MULTIPLICATOR_MINIMAP
@@ -69,52 +72,57 @@ dijkstra = Dijkstra(game_map.data, (player.y,player.x), (18, 18))
 dijkstra.start()
 path = dijkstra.get_shortest_path()
 
-
 def main():
-    global DETAIL_LEVEL
     # Initialise screen
     pygame.display.set_caption('Pygame - pixel by pixel raycaster')
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    clock = pygame.time.Clock() # initialise clock
+    clock = pygame.time.Clock()  # initialise clock
     pygame.key.set_repeat(True)  # enable key holding
 
     while 1:  # event loop
         draw_scene()  # render graphics
         draw_minimap(mini_map_offset_x, mini_map_offset_y)  # render minimap
         player.tick()  # move player
-        clock.tick(60)  # make sure game doesn't run at more than 60 frames per second
+        clock.tick(30)  # make sure game doesn't run at more than 60 frames per second
 
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
                 return
             elif event.type == pylocs.KEYDOWN:
                 if event.key == pylocs.K_w:
-                    player.set_velocity_x(player.velocity_x + math.cos(math.radians(player.angle)) / 10)
-                    player.set_velocity_y(player.velocity_y + math.sin(math.radians(player.angle)) / 10)
+                    player.set_velocity_x(player.velocity_x + math.cos(math.radians(player.angle)) / 5)
+                    player.set_velocity_y(player.velocity_y + math.sin(math.radians(player.angle)) / 5)
 
                 if event.key == pylocs.K_s:
-                    player.set_velocity_x(player.velocity_x - math.cos(math.radians(player.angle)) / 10)
-                    player.set_velocity_y(player.velocity_y - math.sin(math.radians(player.angle)) / 10)
+                    player.set_velocity_x(player.velocity_x - math.cos(math.radians(player.angle)) / 5)
+                    player.set_velocity_y(player.velocity_y - math.sin(math.radians(player.angle)) / 5)
 
                 if event.key == pylocs.K_d:
-                    player.set_velocity_angle(player.velocity_angle + 25)
+                    player.set_velocity_angle(player.velocity_angle + 5)
 
                 if event.key == pylocs.K_a:
-                    player.set_velocity_angle(player.velocity_angle - 25)
+                    player.set_velocity_angle(player.velocity_angle - 5)
 
-                if event.key == pylocs.K_p:
+                if event.key == pylocs.K_m:
                     if path:
                         path_point = path.pop()
                         player.set_y(path_point[1])
                         player.set_x(path_point[2])
 
+                if event.key == pylocs.K_p:
+                    config.toggle_perspective_correction_on()
+
+                if event.key == pylocs.K_l:
+                    config.toggle_dynamic_lighting()
+
+                if event.key == pylocs.K_t:
+                    config.toggle_texture_filtering()
+
                 if event.key == pylocs.K_UP:
-                    if DETAIL_LEVEL < 5:
-                        DETAIL_LEVEL += 1
+                    config.increase_pixel_size()
 
                 if event.key == pylocs.K_DOWN:
-                    if DETAIL_LEVEL >= 1:
-                        DETAIL_LEVEL -= 1
+                    config.decrease_pixel_size()
 
         screen = pygame.display.get_surface()
         screen.blit(surface, (0, 0))
@@ -172,7 +180,7 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
                 x_cor_texture = 1
 
             red, green, blue, alpha = pixel_data[x_cor_texture, y_cor_texture]
-            if DETAIL_LEVEL == 0:
+            if config.dynamic_lighting:
                 distance_dark_blue = int(entry[0]*3)
                 distance_dark = distance_dark_blue*2
                 red -= distance_dark if red > distance_dark else red
@@ -183,7 +191,7 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
 
             current_pixel_position = start + vertical_wall_pixel
             for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1), int(current_pixel_position)):
-                for a in range(1 if DETAIL_LEVEL < 1 else DETAIL_LEVEL):
+                for a in range(config.pixel_size):
                     __canvas[screen_x+a, y] = result_color_string
             last_pixel_position = current_pixel_position
         break
@@ -194,7 +202,7 @@ def draw_scene():
     player_angle = player.angle
     player_angle_start = player_angle - config.fov / 2
 
-    for screen_x in range(0, int(mini_map_offset_x), 1 if DETAIL_LEVEL < 1 else DETAIL_LEVEL):
+    for screen_x in range(0, int(mini_map_offset_x), config.pixel_size):
         ray_angle = player_angle_start + config.fov / mini_map_offset_x * screen_x
 
         # degrees fixed to range 0 - 359

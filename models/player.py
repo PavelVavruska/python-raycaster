@@ -17,8 +17,8 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-MAX_VELOCITY_ANGLE = 5
-MAX_VELOCITY_STEP = 1
+MAX_VELOCITY_ANGLE = 10
+MAX_VELOCITY_STEP = 2
 
 
 class Player(object):
@@ -86,7 +86,7 @@ class Player(object):
 
     def process_view_angle(self):
         self.set_angle(self.angle + self.velocity_angle)
-        self.set_velocity_angle(self.velocity_angle*0.1)
+        self.set_velocity_angle(self.velocity_angle*0.2)
 
         if self.angle >= 360:
             self.set_angle(self.angle - 360)
@@ -97,8 +97,8 @@ class Player(object):
         # TODO Collision detection
         self.set_x(self.x + self.velocity_x)
         self.set_y(self.y + self.velocity_y)
-        self.set_velocity_x(self.velocity_x*0.1)
-        self.set_velocity_y(self.velocity_y*0.1)
+        self.set_velocity_x(self.velocity_x*0.2)
+        self.set_velocity_y(self.velocity_y*0.2)
         self.process_view_angle()
 
     def tick(self):
