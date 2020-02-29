@@ -25,6 +25,7 @@ from PIL import Image
 from models.config import Config
 from models.map import Map
 from models.player import Player
+from graphmath.nodes import Dijkstra
 
 
 # constants
@@ -64,6 +65,11 @@ font = pygame.font.Font(None, 30)
 surface = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
 
 
+dijkstra = Dijkstra(game_map.data, (player.y,player.x), (18, 18))
+dijkstra.start()
+path = dijkstra.get_shortest_path()
+
+
 def main():
     global DETAIL_LEVEL
     # Initialise screen
@@ -95,6 +101,12 @@ def main():
 
                 if event.key == pylocs.K_a:
                     player.set_velocity_angle(player.velocity_angle - 25)
+
+                if event.key == pylocs.K_p:
+                    if path:
+                        path_point = path.pop()
+                        player.set_y(path_point[1])
+                        player.set_x(path_point[2])
 
                 if event.key == pylocs.K_UP:
                     if DETAIL_LEVEL < 5:
