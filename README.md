@@ -15,7 +15,7 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * `L - dynamic lighting on / off`
 * `Mouse click on minimap - execute move to the selected place by using Dijkstra's Shortest Path First algorithm.`
 
-<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200219.png">
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200301.png">
 01.03.2020 version - Dijkstra's Shortest Path First algorithm for minimap mouse click, dynamic lighting on/off, perspective correction on/off
 
 
