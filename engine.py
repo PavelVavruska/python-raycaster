@@ -44,11 +44,12 @@ MULTIPLICATOR_MINIMAP = 5 * MINIMAP_BASE
 
 COLOR_WHITE = (255, 255, 255)  # '#FFFFFF'
 COLOR_BLACK = (0, 0, 0)  # '#000000'
-COLOR_CYAN = (0, 0, 255)  # '#0000FF'
+COLOR_CYAN = (0, 255, 255)  # '#0000FF'
 COLOR_GREEN = (0, 255, 0)  # '#00FF00'
 COLOR_RED = (255, 0, 0)  # '#FF0000'
 COLOR_GRAY = (50, 50, 50)
-
+COLOR_YELLOW = (255, 255, 0)
+COLOR_BLUE = (0, 0, 255)
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -101,7 +102,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
                 return
-            elif event.type == pylocs.MOUSEBUTTONUP:
+            elif event.type == pylocs.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 cor_in_map_x = int((pos[0]-mini_map_offset_x)/MULTIPLICATOR_MINIMAP)
                 cor_in_map_y = int(pos[1]/MULTIPLICATOR_MINIMAP)
@@ -166,7 +167,30 @@ def main():
         surface.fill((0, 0, 0))
 
 
-def draw_minimap(minimap_x, minimap_y):
+def draw_a_squere(canvas, x, y, color):
+    # top
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+        canvas[x + pixel_of_line, y] = color
+    # bottom
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+        canvas[x + pixel_of_line, MULTIPLICATOR_MINIMAP-1 + y] = color
+    # left
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+        canvas[x, y + pixel_of_line] = color
+    # right
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+        canvas[x + MULTIPLICATOR_MINIMAP - 1, y + pixel_of_line] = color
+
+
+def draw_a_cross(canvas, x, y, color):
+    # top
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+        canvas[x + MULTIPLICATOR_MINIMAP - pixel_of_line, y + pixel_of_line] = color
+    # bottom
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+        canvas[x + pixel_of_line, y + pixel_of_line] = color
+
+def draw_minimap(offset_x, offset_y):
     __canvas = pygame.PixelArray(surface)
     # render minimap (player, )
     # draw objects
@@ -178,25 +202,25 @@ def draw_minimap(minimap_x, minimap_y):
                 color = COLOR_RED
             else:
                 color = COLOR_GREEN
-            __canvas[minimap_x + id_x * MULTIPLICATOR_MINIMAP, minimap_y + id_y * MULTIPLICATOR_MINIMAP] = color
+            draw_a_squere(
+                __canvas,
+                offset_x + id_x * MULTIPLICATOR_MINIMAP,
+                offset_y + id_y * MULTIPLICATOR_MINIMAP,
+                color
+            )
+
     # draw player
     # player base
-    player_on_minimap_x = minimap_x + int(player.x * MULTIPLICATOR_MINIMAP)
-    player_on_minimap_y = minimap_y + int(player.y * MULTIPLICATOR_MINIMAP)
-    try:
-        __canvas[player_on_minimap_x, player_on_minimap_y] = COLOR_WHITE  # core
-        __canvas[player_on_minimap_x-MINIMAP_BASE, player_on_minimap_y] = COLOR_WHITE  # left
-        __canvas[player_on_minimap_x+MINIMAP_BASE, player_on_minimap_y] = COLOR_WHITE  # right
-        __canvas[player_on_minimap_x, player_on_minimap_y-MINIMAP_BASE] = COLOR_WHITE  # top
-        __canvas[player_on_minimap_x, player_on_minimap_y+MINIMAP_BASE] = COLOR_WHITE  # bottom
-    except IndexError:
-        _logger.error('IndexError player out of map range: invalid index minimap.')
+    player_on_minimap_x = offset_x + int(player.x * MULTIPLICATOR_MINIMAP)
+    player_on_minimap_y = offset_y + int(player.y * MULTIPLICATOR_MINIMAP)
+
+    draw_a_squere(__canvas, player_on_minimap_x, player_on_minimap_y, COLOR_WHITE)
 
     if path:
         for point in path:
-            x = minimap_x + int(point[2] * MULTIPLICATOR_MINIMAP)
-            y = minimap_y + int(point[1] * MULTIPLICATOR_MINIMAP)
-            __canvas[x, y] = COLOR_WHITE
+            x = offset_x + int(point[2] * MULTIPLICATOR_MINIMAP)
+            y = offset_y + int(point[1] * MULTIPLICATOR_MINIMAP)
+            draw_a_cross(__canvas, x, y, COLOR_YELLOW)
 
 
 def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
