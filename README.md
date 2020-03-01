@@ -10,7 +10,14 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * `W / S     - move forward/backward`
 * `A / D     - turn left/right`
 * `Q / E     - strafe left/right`
-* `UP / DOWN - level of detail
+* `UP / DOWN - level of detail`
+* `P - perspective correction on / off`
+* `L - dynamic lighting on / off`
+* `Mouse click on minimap - execute move to the selected place by using Dijkstra's Shortest Path First algorithm.`
+
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200219.png">
+01.03.2020 version - Dijkstra's Shortest Path First algorithm for minimap mouse click, dynamic lighting on/off, perspective correction on/off
+
 
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200219.png">
 19.02.2020 version - engine migrated from Tkinter to Pygame, big cleanup of code
