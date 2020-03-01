@@ -17,7 +17,10 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
+import sys
+import logging
 import math
+import traceback
 import pygame
 import pygame.locals as pylocs
 from PIL import Image
@@ -26,9 +29,8 @@ from models.map import Map
 from models.player import Player
 from graphmath.nodes import Dijkstra
 
-
 # constants
-BASE_WIDTH, BASE_HEIGHT = 4, 3
+BASE_WIDTH, BASE_HEIGHT = 7, 3
 MULTIPLICATOR_WIDTH, MULTIPLICATOR_HEIGHT = 100, 100
 WINDOW_WIDTH, WINDOW_HEIGHT = int(MULTIPLICATOR_WIDTH*BASE_WIDTH), int(MULTIPLICATOR_HEIGHT*BASE_HEIGHT)
 
@@ -37,7 +39,8 @@ start_frame_switcher = 0
 
 MICROSECONDS_IN_SECOND = 1_000_000
 NANOSECONDS_IN_SECOND = 1_000_000_000
-MULTIPLICATOR_MINIMAP = 5
+MINIMAP_BASE = 3
+MULTIPLICATOR_MINIMAP = 5 * MINIMAP_BASE
 
 COLOR_WHITE = (255, 255, 255)  # '#FFFFFF'
 COLOR_BLACK = (0, 0, 0)  # '#000000'
@@ -46,9 +49,13 @@ COLOR_GREEN = (0, 255, 0)  # '#00FF00'
 COLOR_RED = (255, 0, 0)  # '#FF0000'
 COLOR_GRAY = (50, 50, 50)
 
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
+
 player = Player(3, 3, 100)
 config = Config(
-    fov=100,
+    fov=130,
     is_perspective_correction_on=True,
     is_metric_on=True,
     pixel_size=2,
@@ -67,12 +74,12 @@ font = pygame.font.Font(None, 30)
 
 surface = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
 
+# global
+path = None
 
-dijkstra = Dijkstra(game_map.data, (player.y,player.x), (18, 18))
-dijkstra.start()
-path = dijkstra.get_shortest_path()
 
 def main():
+    global path
     # Initialise screen
     pygame.display.set_caption('Pygame - pixel by pixel raycaster')
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -80,14 +87,45 @@ def main():
     pygame.key.set_repeat(True)  # enable key holding
 
     while 1:  # event loop
+        on_screen_text = str(int(clock.get_fps()))
         draw_scene()  # render graphics
         draw_minimap(mini_map_offset_x, mini_map_offset_y)  # render minimap
         player.tick()  # move player
         clock.tick(30)  # make sure game doesn't run at more than 60 frames per second
 
+        if path:  # move player if the path is set
+            path_point = path.pop()
+            player.set_y(path_point[1])
+            player.set_x(path_point[2])
+
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
                 return
+            elif event.type == pylocs.MOUSEBUTTONUP:
+                pos = pygame.mouse.get_pos()
+                cor_in_map_x = int((pos[0]-mini_map_offset_x)/MULTIPLICATOR_MINIMAP)
+                cor_in_map_y = int(pos[1]/MULTIPLICATOR_MINIMAP)
+                if (
+                        game_map.get_at(cor_in_map_x, cor_in_map_y) == -1 and
+                        pos[0] > mini_map_offset_x
+                ):
+                    if path:
+                        path.clear()
+                    dijkstra = Dijkstra(
+                        game_map.data,
+                        (int(player.x), int(player.y)),
+                        (cor_in_map_x, cor_in_map_y)
+                    )
+                    try:
+                        dijkstra.start()
+                        path = dijkstra.get_shortest_path()
+                    except ValueError:
+                        _logger.error('Road must be selected, not wall.')
+                    except KeyError:
+                        traceback.print_exc(file=sys.stdout)
+                    except IndexError:
+                        traceback.print_exc(file=sys.stdout)
+
             elif event.type == pylocs.KEYDOWN:
                 if event.key == pylocs.K_w:
                     player.set_velocity_x(player.velocity_x + math.cos(math.radians(player.angle)) / 5)
@@ -102,12 +140,6 @@ def main():
 
                 if event.key == pylocs.K_a:
                     player.set_velocity_angle(player.velocity_angle - 5)
-
-                if event.key == pylocs.K_m:
-                    if path:
-                        path_point = path.pop()
-                        player.set_y(path_point[1])
-                        player.set_x(path_point[2])
 
                 if event.key == pylocs.K_p:
                     config.toggle_perspective_correction_on()
@@ -127,7 +159,7 @@ def main():
         screen = pygame.display.get_surface()
         screen.blit(surface, (0, 0))
 
-        fps = font.render(str(int(clock.get_fps())), True, pygame.Color('white'))
+        fps = font.render(on_screen_text, True, pygame.Color('white'))
         screen.blit(fps, (0, 0))
 
         pygame.display.flip()
@@ -151,11 +183,20 @@ def draw_minimap(minimap_x, minimap_y):
     # player base
     player_on_minimap_x = minimap_x + int(player.x * MULTIPLICATOR_MINIMAP)
     player_on_minimap_y = minimap_y + int(player.y * MULTIPLICATOR_MINIMAP)
-    __canvas[player_on_minimap_x, player_on_minimap_y] = COLOR_WHITE  # core
-    __canvas[player_on_minimap_x-MULTIPLICATOR_MINIMAP, player_on_minimap_y] = COLOR_WHITE  # left
-    __canvas[player_on_minimap_x+MULTIPLICATOR_MINIMAP, player_on_minimap_y] = COLOR_WHITE  # right
-    __canvas[player_on_minimap_x, player_on_minimap_y-MULTIPLICATOR_MINIMAP] = COLOR_WHITE  # top
-    __canvas[player_on_minimap_x, player_on_minimap_y+MULTIPLICATOR_MINIMAP] = COLOR_WHITE  # bottom
+    try:
+        __canvas[player_on_minimap_x, player_on_minimap_y] = COLOR_WHITE  # core
+        __canvas[player_on_minimap_x-MINIMAP_BASE, player_on_minimap_y] = COLOR_WHITE  # left
+        __canvas[player_on_minimap_x+MINIMAP_BASE, player_on_minimap_y] = COLOR_WHITE  # right
+        __canvas[player_on_minimap_x, player_on_minimap_y-MINIMAP_BASE] = COLOR_WHITE  # top
+        __canvas[player_on_minimap_x, player_on_minimap_y+MINIMAP_BASE] = COLOR_WHITE  # bottom
+    except IndexError:
+        _logger.error('IndexError player out of map range: invalid index minimap.')
+
+    if path:
+        for point in path:
+            x = minimap_x + int(point[2] * MULTIPLICATOR_MINIMAP)
+            y = minimap_y + int(point[1] * MULTIPLICATOR_MINIMAP)
+            __canvas[x, y] = COLOR_WHITE
 
 
 def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):

@@ -17,6 +17,11 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
+
 
 class Dijkstra:
     open_nodes = dict()
@@ -32,7 +37,7 @@ class Dijkstra:
         # set start and end points
         self.start_x, self.start_y = start
         self.end_x, self.end_y = end
-
+        _logger.debug('Start: searching for path from ' + str(start) + ' to ' + str(end))
         # create map
         self.world_map = [[-2]*len(world_map) for i in range(len(world_map))]
         for position_y, data_y in enumerate(world_map):
@@ -41,6 +46,7 @@ class Dijkstra:
                     self.world_map[position_y][position_x] = 999
 
     def get_shortest_path(self):
+        _logger.debug('Shortest path (' + str(len(self.shortest_path)) + ') found: ' + str(self.shortest_path))
         return self.shortest_path
 
     def extract_path_from_closed_nodes(self):
@@ -52,7 +58,7 @@ class Dijkstra:
 
     def find_and_mark_neighbours(self):
         if not self.open_nodes:
-            print('DONE')
+            _logger.debug('Path found: Open nodes are empty.')
             for key, value in self.closed_nodes.items():
                 self.world_map[key[1]][key[0]] = value[0]
             return
@@ -81,7 +87,7 @@ class Dijkstra:
 
             # add left
             if self.world_map[key[0]][key[1] - 1] == 999:
-                open_nodes_to_add[(key[0], key[1] - 1)] = (value[0] + 1, key[1], key[0])
+                open_nodes_to_add[(key[0], key[1] - 1)] = (value[0] + 1, key[0], key[1])
 
         for node in open_nodes_to_close:
             self.open_nodes.pop(node)
@@ -95,10 +101,9 @@ class Dijkstra:
         if self.world_map[self.start_y][self.start_x] == 999:
             self.open_nodes[(self.start_y, self.start_x)] = (0, self.start_y, self.start_x)
         else:
-            raise ValueError("Start point is not suitable area, it needs to be 999")
+            raise ValueError("Start point is not suitable area, it needs to be road")
 
         if not self.world_map[self.end_y][self.end_x] == 999:
-            raise ValueError("End point is not suitable area, it needs to be 999")
-
+            raise ValueError("End point is not suitable area, it needs to be road")
         self.find_and_mark_neighbours()
         self.extract_path_from_closed_nodes()
