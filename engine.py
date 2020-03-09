@@ -41,6 +41,9 @@ MICROSECONDS_IN_SECOND = 1_000_000
 NANOSECONDS_IN_SECOND = 1_000_000_000
 MINIMAP_BASE = 3
 MULTIPLICATOR_MINIMAP = 5 * MINIMAP_BASE
+MINIMAL_DELTA_POSITION = 0.1
+MINIMAL_DELTA_ANGLE = 5
+MAP_HALF_COORDINATE = 0.5
 
 COLOR_WHITE = (255, 255, 255)  # '#FFFFFF'
 COLOR_BLACK = (0, 0, 0)  # '#000000'
@@ -56,7 +59,7 @@ _logger = logging.getLogger(__name__)
 
 player = Player(3, 3, 100)
 config = Config(
-    fov=130,
+    fov=100,
     is_perspective_correction_on=True,
     is_metric_on=True,
     pixel_size=2,
@@ -95,20 +98,60 @@ def main():
         clock.tick(30)  # make sure game doesn't run at more than 60 frames per second
 
         if path:  # move player if the path is set
-            path_point = path.pop()
-            player.set_y(path_point[1])
-            player.set_x(path_point[2])
+            _, wanted_y, wanted_x = path[-1]
+            cur_x = player.x
+            cur_y = player.y
+            cur_angle = player.angle
+
+            wanted_x += MAP_HALF_COORDINATE
+            wanted_y += MAP_HALF_COORDINATE
+
+            d_x = wanted_x - cur_x
+            d_y = wanted_y - cur_y
+            d_r = math.atan2(d_y, d_x)
+
+            if cur_x - MINIMAL_DELTA_POSITION > wanted_x:
+                player.set_x(player.x-MINIMAL_DELTA_POSITION)
+            elif cur_x + MINIMAL_DELTA_POSITION < wanted_x:
+                player.set_x(player.x+MINIMAL_DELTA_POSITION)
+
+            if cur_y - MINIMAL_DELTA_POSITION > wanted_y:
+                player.set_y(player.y-MINIMAL_DELTA_POSITION)
+            elif cur_y + MINIMAL_DELTA_POSITION < wanted_y:
+                player.set_y(player.y+MINIMAL_DELTA_POSITION)
+
+            int_cur_x = cur_x
+            int_cur_y = cur_y
+            int_wanted_x = wanted_x
+            int_wanted_y = wanted_y
+
+            if (
+                    int_cur_x + MINIMAL_DELTA_POSITION*2 > int_wanted_x > int_cur_x - MINIMAL_DELTA_POSITION*2 and
+                    int_cur_y + MINIMAL_DELTA_POSITION*2 > int_wanted_y > int_cur_y - MINIMAL_DELTA_POSITION*2
+            ):
+                path.pop()
+            else:
+                wanted_angle = math.degrees(d_r)
+                if wanted_angle > 360:
+                    wanted_angle -= 360
+                if wanted_angle < 0:
+                    wanted_angle += 360
+
+                if cur_angle - MINIMAL_DELTA_ANGLE*3 > wanted_angle:
+                    player.set_angle(player.angle - MINIMAL_DELTA_ANGLE)
+                elif cur_angle + MINIMAL_DELTA_ANGLE*3 < wanted_angle:
+                    player.set_angle(player.angle + MINIMAL_DELTA_ANGLE)
 
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
                 return
             elif event.type == pylocs.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-                cor_in_map_x = int((pos[0]-mini_map_offset_x)/MULTIPLICATOR_MINIMAP)
-                cor_in_map_y = int(pos[1]/MULTIPLICATOR_MINIMAP)
+                mouse_pos_x, mouse_pos_y = pygame.mouse.get_pos()
+                cor_in_map_x = int((mouse_pos_x-mini_map_offset_x)/MULTIPLICATOR_MINIMAP)
+                cor_in_map_y = int(mouse_pos_y/MULTIPLICATOR_MINIMAP)
                 if (
                         game_map.get_at(cor_in_map_x, cor_in_map_y) == -1 and
-                        pos[0] > mini_map_offset_x
+                        mouse_pos_x > mini_map_offset_x
                 ):
                     if path:
                         path.clear()
@@ -169,17 +212,17 @@ def main():
 
 def draw_a_squere(canvas, x, y, color):
     # top
-    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-2):
         canvas[x + pixel_of_line, y] = color
     # bottom
-    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
-        canvas[x + pixel_of_line, MULTIPLICATOR_MINIMAP-1 + y] = color
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-2):
+        canvas[x + pixel_of_line, MULTIPLICATOR_MINIMAP-2 + y] = color
     # left
-    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-2):
         canvas[x, y + pixel_of_line] = color
     # right
-    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-1):
-        canvas[x + MULTIPLICATOR_MINIMAP - 1, y + pixel_of_line] = color
+    for pixel_of_line in range(1, MULTIPLICATOR_MINIMAP-2):
+        canvas[x + MULTIPLICATOR_MINIMAP - 2, y + pixel_of_line] = color
 
 
 def draw_a_cross(canvas, x, y, color):
@@ -211,10 +254,10 @@ def draw_minimap(offset_x, offset_y):
 
     # draw player
     # player base
-    player_on_minimap_x = offset_x + int(player.x * MULTIPLICATOR_MINIMAP)
-    player_on_minimap_y = offset_y + int(player.y * MULTIPLICATOR_MINIMAP)
+    player_on_minimap_x = offset_x + int((-MAP_HALF_COORDINATE + player.x) * MULTIPLICATOR_MINIMAP)
+    player_on_minimap_y = offset_y + int((-MAP_HALF_COORDINATE + player.y) * MULTIPLICATOR_MINIMAP)
 
-    draw_a_squere(__canvas, player_on_minimap_x, player_on_minimap_y, COLOR_WHITE)
+    draw_a_cross(__canvas, player_on_minimap_x, player_on_minimap_y, COLOR_WHITE)
 
     if path:
         for point in path:
@@ -228,10 +271,12 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
     __canvas = pygame.PixelArray(surface)
     for entry in sorted(z_buffer_wall, reverse=True):
         # actual line by line rendering of the visible object
-        if entry[0] < 1:
-            continue
-        start = int(WINDOW_HEIGHT / 2 - WINDOW_HEIGHT / (entry[0]*2))
-        wall_vertical_length_full = 2 * WINDOW_HEIGHT / (entry[0]*2)
+        object_distance, object_id = entry
+        if object_distance < 1:
+            object_distance = 1
+            #continue
+        start = int(WINDOW_HEIGHT / 2 - WINDOW_HEIGHT / (object_distance*2))
+        wall_vertical_length_full = 2 * WINDOW_HEIGHT / (object_distance*2)
 
         size_of_texture_pixel = int(wall_vertical_length_full / 64)
         one_artificial_pixel_size = size_of_texture_pixel if size_of_texture_pixel>0 else 1
@@ -239,14 +284,14 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
         last_pixel_position = None
         for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
             y_cor_texture = int(64 + 64/wall_vertical_length_full*vertical_wall_pixel)
-            x_cor_texture = int(entry[1] * 64)
+            x_cor_texture = int(object_id * 64)
 
             if x_cor_texture <= 1:
                 x_cor_texture = 1
 
             red, green, blue, alpha = pixel_data[x_cor_texture, y_cor_texture]
             if config.dynamic_lighting:
-                distance_dark_blue = int(entry[0]*3)
+                distance_dark_blue = int(object_distance*3)
                 distance_dark = distance_dark_blue*2
                 red -= distance_dark if red > distance_dark else red
                 green -= distance_dark if green > distance_dark else green
