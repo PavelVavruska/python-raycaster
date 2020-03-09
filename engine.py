@@ -272,9 +272,8 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
     for entry in sorted(z_buffer_wall, reverse=True):
         # actual line by line rendering of the visible object
         object_distance, object_id = entry
-        if object_distance < 1:
-            object_distance = 1
-            #continue
+        if object_distance < 0.2:  # skip render distance is too short
+            continue
         start = int(WINDOW_HEIGHT / 2 - WINDOW_HEIGHT / (object_distance*2))
         wall_vertical_length_full = 2 * WINDOW_HEIGHT / (object_distance*2)
 
@@ -302,7 +301,9 @@ def draw_from_z_buffer_wall(z_buffer_wall, screen_x, param, param1):
             current_pixel_position = start + vertical_wall_pixel
             for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1), int(current_pixel_position)):
                 for a in range(config.pixel_size):
-                    __canvas[screen_x+a, y] = result_color_string
+                    real_x = screen_x+a
+                    if 0 < y < WINDOW_HEIGHT:
+                        __canvas[real_x, y] = result_color_string
             last_pixel_position = current_pixel_position
         break
     del __canvas

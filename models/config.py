@@ -18,7 +18,7 @@
 #  SOFTWARE.
 
 
-class Config(object):
+class Config:
 
     def __init__(
             self,

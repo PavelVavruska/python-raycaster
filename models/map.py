@@ -18,7 +18,7 @@
 #  SOFTWARE.
 
 
-class Map(object):
+class Map:
 
     def __init__(self):
         self.__map = [

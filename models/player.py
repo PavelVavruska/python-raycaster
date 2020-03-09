@@ -21,7 +21,7 @@ MAX_VELOCITY_ANGLE = 10
 MAX_VELOCITY_STEP = 2
 
 
-class Player(object):
+class Player:
     def __init__(self, x, y, angle):
         self.__x = x
         self.__y = y
@@ -64,34 +64,27 @@ class Player(object):
         self.__angle = angle
 
     def set_velocity_x(self, velocity_x):
-        if velocity_x < -MAX_VELOCITY_STEP:
-            velocity_x = -MAX_VELOCITY_STEP
-        if velocity_x > MAX_VELOCITY_STEP:
-            velocity_x = MAX_VELOCITY_STEP
-        self.__velocity_x = velocity_x
+        velocity_x = max(velocity_x, -MAX_VELOCITY_STEP)
+        self.__velocity_x = min(velocity_x, MAX_VELOCITY_STEP)
 
     def set_velocity_y(self, velocity_y):
-        if velocity_y < -MAX_VELOCITY_STEP:
-            velocity_y = -MAX_VELOCITY_STEP
-        if velocity_y > MAX_VELOCITY_STEP:
-            velocity_y = MAX_VELOCITY_STEP
-        self.__velocity_y = velocity_y
+        velocity_y = max(velocity_y, -MAX_VELOCITY_STEP)
+        self.__velocity_y = min(velocity_y, MAX_VELOCITY_STEP)
 
     def set_velocity_angle(self, velocity_angle):
-        if velocity_angle < -MAX_VELOCITY_ANGLE:
-            velocity_angle = -MAX_VELOCITY_ANGLE
-        if velocity_angle > MAX_VELOCITY_ANGLE:
-            velocity_angle = MAX_VELOCITY_ANGLE
-        self.__velocity_angle = velocity_angle
+        velocity_angle = max(velocity_angle, -MAX_VELOCITY_ANGLE)
+        self.__velocity_angle = min(velocity_angle, MAX_VELOCITY_ANGLE)
 
     def process_view_angle(self):
-        self.set_angle(self.angle + self.velocity_angle)
-        self.set_velocity_angle(self.velocity_angle*0.2)
+        angle = self.angle
+        velocity_angle = self.velocity_angle
+        self.set_angle(angle + velocity_angle)
+        self.set_velocity_angle(velocity_angle*0.2)
 
-        if self.angle >= 360:
-            self.set_angle(self.angle - 360)
-        if self.angle < 0:
-            self.set_angle(self.angle + 360)
+        if angle >= 360:
+            self.set_angle(angle - 360)
+        if angle < 0:
+            self.set_angle(angle + 360)
 
     def movePlayer(self):
         # TODO Collision detection
