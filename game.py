@@ -18,7 +18,7 @@ def main():
     )
     game_map = Map()
     engine = Engine(player=player, game_map=game_map, config=config)
-    engine.start()
+    engine.activate()
 
 
 if __name__ == '__main__':
