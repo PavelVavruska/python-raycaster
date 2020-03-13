@@ -149,11 +149,12 @@ class Raycaster:
                     config_is_perspective_correction_on
                 )
                 if detected:
-                    if detected[0]: # is wall
-                        z_buffer_walls.append(detected)
+                    isWall, ray_distance_from_player, object_on_the_map_type_id_with_offset = detected
+                    if isWall: # is wall
+                        z_buffer_walls.append((ray_distance_from_player, object_on_the_map_type_id_with_offset))
                         break  # cannot see behind the first wall
                     else:
-                        z_buffer_objects.append(detected)
+                        z_buffer_objects.append((ray_distance_from_player, object_on_the_map_type_id_with_offset))
 
                 ray_position_x, ray_position_y = cls.move_ray(
                     ray_angle, ray_position_x, ray_position_y

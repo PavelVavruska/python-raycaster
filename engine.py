@@ -155,43 +155,66 @@ class Engine:
                 self.player.set_angle(self.player.angle + Constants.MIN_DELTA_ANGLE)
 
     def activate(self):
-        while 1:
-            canvas = pygame.PixelArray(self.surface)
+        # during game static variables
+        mini_map_offset_x = self.mini_map_offset_x
+        mini_map_offset_y = self.mini_map_offset_y
+        mini_map_factor = Constants.MULTIPLICATOR_MINIMAP
+        game_map_size_x = self.game_map.size_x
+        game_map_size_y = self.game_map.size_y
+        game_map_data = self.game_map.data
+        window_height = Constants.WINDOW_HEIGHT
+
+        config_fov = self.config.fov
+        config_pixel_size = self.config.pixel_size
+        config_is_perspective_correction_on = self.config.is_perspective_correction_on
+        config_dynamic_lighting = self.config.dynamic_lighting
+
+        # pygame static variables
+        pygame_surface = self.surface
+        while 1:  # game engine ticks
+            # during game changing variables
+            player_angle = self.player.angle
+            player_pos_x = self.player.x
+            player_pos_y = self.player.y
+            player_path = self.path
+
+            canvas = pygame.PixelArray(pygame_surface)
+
             x_cor_ordered_z_buffer_walls, x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
-                player_angle=self.player.angle,
-                player_pos_x=self.player.x,
-                player_pos_y=self.player.y,
-                config_fov=self.config.fov,
-                config_pixel_size=self.config.pixel_size,
-                config_is_perspective_correction_on=self.config.is_perspective_correction_on,
-                mini_map_offset_x=self.mini_map_offset_x,
-                game_map_size_x=self.game_map.size_x,
-                game_map_size_y=self.game_map.size_y,
+                player_angle=player_angle,
+                player_pos_x=player_pos_x,
+                player_pos_y=player_pos_y,
+                config_fov=config_fov,
+                config_pixel_size=config_pixel_size,
+                config_is_perspective_correction_on=config_is_perspective_correction_on,
+                mini_map_offset_x=mini_map_offset_x,
+                game_map_size_x=game_map_size_x,
+                game_map_size_y=game_map_size_y,
                 game_map=self.game_map.data
             )
             Renderer.draw_from_z_buffer_walls(
                 canvas=canvas,
-                dynamic_lighting=self.config.dynamic_lighting,
-                pixel_size=self.config.pixel_size,
-                window_height=Constants.WINDOW_HEIGHT,
+                dynamic_lighting=config_dynamic_lighting,
+                pixel_size=config_pixel_size,
+                window_height=window_height,
                 x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_walls
             )
             Renderer.draw_from_z_buffer_objects(
                 canvas=canvas,
-                dynamic_lighting=self.config.dynamic_lighting,
-                pixel_size=self.config.pixel_size,
-                window_height=Constants.WINDOW_HEIGHT,
+                dynamic_lighting=config_dynamic_lighting,
+                pixel_size=config_pixel_size,
+                window_height=window_height,
                 x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
             )
             Renderer.draw_minimap(
                 canvas=canvas,
-                offset_x=self.mini_map_offset_x,
-                offset_y=self.mini_map_offset_y,
-                game_map_data=self.game_map.data,
-                player_x=self.player.x,
-                player_y=self.player.y,
-                path=self.path,
-                minimap_factor=Constants.MULTIPLICATOR_MINIMAP
+                offset_x=mini_map_offset_x,
+                offset_y=mini_map_offset_y,
+                game_map_data=game_map_data,
+                player_x=player_pos_x,
+                player_y=player_pos_y,
+                path=player_path,
+                mini_map_factor=mini_map_factor
             )
             self.player.tick()  # move player
             self.clock.tick(30)  # make sure game doesn't run at more than 30 frames per second
@@ -204,10 +227,10 @@ class Engine:
 
             screen = pygame.display.get_surface()
             del canvas
-            screen.blit(self.surface, (0, 0))
+            screen.blit(pygame_surface, (0, 0))
 
             fps = self.font.render(str(int(self.clock.get_fps())), True, pygame.Color('white'))
             screen.blit(fps, (0, 0))
 
             pygame.display.flip()
-            self.surface.fill((0, 0, 0))
+            pygame_surface.fill((0, 0, 0))

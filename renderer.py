@@ -31,7 +31,7 @@ class Renderer:
             canvas[x + pixel_of_line, y + pixel_of_line] = color
 
     @classmethod
-    def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, player_x, player_y, path, minimap_factor):
+    def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, player_x, player_y, path, mini_map_factor):
 
         # render minimap (player, )
         # draw objects
@@ -45,22 +45,22 @@ class Renderer:
                     color = Constants.COLOR_GREEN
                 cls.draw_a_squere(
                     canvas,
-                    offset_x + id_x * minimap_factor,
-                    offset_y + id_y * minimap_factor,
+                    offset_x + id_x * mini_map_factor,
+                    offset_y + id_y * mini_map_factor,
                     color
                 )
 
         # draw player
         # player base
-        player_on_minimap_x = offset_x + int((-Constants.MAP_HALF_COORDINATE + player_x) * minimap_factor)
-        player_on_minimap_y = offset_y + int((-Constants.MAP_HALF_COORDINATE + player_y) * minimap_factor)
+        player_on_minimap_x = offset_x + int((-Constants.MAP_HALF_COORDINATE + player_x) * mini_map_factor)
+        player_on_minimap_y = offset_y + int((-Constants.MAP_HALF_COORDINATE + player_y) * mini_map_factor)
 
         cls.draw_a_cross(canvas, player_on_minimap_x, player_on_minimap_y, Constants.COLOR_WHITE)
 
         if path:
             for _, point_y, point_x in path:
-                x = offset_x + int(point_x * Constants.MULTIPLICATOR_MINIMAP)
-                y = offset_y + int(point_y * Constants.MULTIPLICATOR_MINIMAP)
+                x = offset_x + int(point_x * mini_map_factor)
+                y = offset_y + int(point_y * mini_map_factor)
                 cls.draw_a_cross(canvas, x, y, Constants.COLOR_YELLOW)
 
     @classmethod
@@ -70,7 +70,7 @@ class Renderer:
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
             for entry in z_buffer_wall:
                 # actual line by line rendering of the visible object
-                isWall, object_distance, object_id = entry
+                object_distance, object_id = entry
                 if object_distance < 0.2:  # skip render distance is too short
                     continue
                 start = int(half_window_height - window_height / (object_distance * 2))
@@ -114,7 +114,7 @@ class Renderer:
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
             for entry in reversed(z_buffer_wall):
                 # actual line by line rendering of the visible object
-                isWall, object_distance, object_id = entry
+                object_distance, object_id = entry
                 if object_distance < 0.2:  # skip render distance is too short
                     continue
                 start = int(half_window_height - window_height / (object_distance * 2))
