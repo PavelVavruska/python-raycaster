@@ -157,7 +157,7 @@ class Engine:
     def activate(self):
         while 1:
             canvas = pygame.PixelArray(self.surface)
-            x_cor_ordered_z_buffer_data = Raycaster.get_x_cor_ordered_z_buffer_data(
+            x_cor_ordered_z_buffer_walls, x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
                 player_angle=self.player.angle,
                 player_pos_x=self.player.x,
                 player_pos_y=self.player.y,
@@ -169,12 +169,19 @@ class Engine:
                 game_map_size_y=self.game_map.size_y,
                 game_map=self.game_map.data
             )
-            Renderer.draw_from_z_buffer_wall(
+            Renderer.draw_from_z_buffer_walls(
                 canvas=canvas,
                 dynamic_lighting=self.config.dynamic_lighting,
                 pixel_size=self.config.pixel_size,
                 window_height=Constants.WINDOW_HEIGHT,
-                x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_data
+                x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_walls
+            )
+            Renderer.draw_from_z_buffer_objects(
+                canvas=canvas,
+                dynamic_lighting=self.config.dynamic_lighting,
+                pixel_size=self.config.pixel_size,
+                window_height=Constants.WINDOW_HEIGHT,
+                x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
             )
             Renderer.draw_minimap(
                 canvas=canvas,

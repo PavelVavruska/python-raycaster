@@ -124,7 +124,8 @@ class Raycaster:
                                         mini_map_offset_x, game_map_size_x, game_map_size_y, game_map):
         # player_angle = self.player.angle
         player_angle_start = player_angle - config_fov / 2
-        z_buffer = []
+        x_cor_z_buffer_walls = []
+        x_cor_z_buffer_objects = []
         for screen_x in range(0, int(mini_map_offset_x), config_pixel_size):
             ray_angle = player_angle_start + config_fov / mini_map_offset_x * screen_x
 
@@ -134,15 +135,13 @@ class Raycaster:
             ray_position_x = player_pos_x  # start position of ray on X axis
             ray_position_y = player_pos_y  # start position of ray on Y axis
 
-            z_buffer_wall = []
-            #z_buffer_object = []
+            z_buffer_walls = []
+            z_buffer_objects = []
 
             while (
                     0 < ray_position_x < game_map_size_x and
                     0 < ray_position_y < game_map_size_y
             ):
-
-                #object_type, distance_from_player, object_subtype
                 detected = cls.calculate_collision_to_z_buffer(
                     ray_angle, ray_position_x, ray_position_y,
                     game_map, game_map_size_x, game_map_size_y,
@@ -150,11 +149,16 @@ class Raycaster:
                     config_is_perspective_correction_on
                 )
                 if detected:
-                    z_buffer_wall.append(detected)
+                    if detected[0]: # is wall
+                        z_buffer_walls.append(detected)
+                        break  # cannot see behind the first wall
+                    else:
+                        z_buffer_objects.append(detected)
 
                 ray_position_x, ray_position_y = cls.move_ray(
                     ray_angle, ray_position_x, ray_position_y
                 )
 
-            z_buffer.append((screen_x, z_buffer_wall))
-        return z_buffer
+            x_cor_z_buffer_walls.append((screen_x, z_buffer_walls))
+            x_cor_z_buffer_objects.append((screen_x, z_buffer_objects))
+        return (x_cor_z_buffer_walls, x_cor_z_buffer_objects)
