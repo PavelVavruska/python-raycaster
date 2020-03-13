@@ -68,7 +68,7 @@ class Renderer:
         half_window_height = window_height / 2
         double_window_height = window_height * 2
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
-            for entry in sorted(z_buffer_wall):
+            for entry in z_buffer_wall:
                 # actual line by line rendering of the visible object
                 isWall, object_distance, object_id = entry
                 if object_distance < 0.2:  # skip render distance is too short
@@ -112,7 +112,7 @@ class Renderer:
         half_window_height = window_height / 2
         double_window_height = window_height * 2
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
-            for entry in sorted(z_buffer_wall):
+            for entry in reversed(z_buffer_wall):
                 # actual line by line rendering of the visible object
                 isWall, object_distance, object_id = entry
                 if object_distance < 0.2:  # skip render distance is too short
@@ -152,4 +152,4 @@ class Renderer:
                                 if 0 < y < window_height:
                                     canvas[real_x, y] = result_color_tuple
                     last_pixel_position = current_pixel_position
-                break
+
