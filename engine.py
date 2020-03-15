@@ -190,7 +190,7 @@ class Engine:
                 mini_map_offset_x=mini_map_offset_x,
                 game_map_size_x=game_map_size_x,
                 game_map_size_y=game_map_size_y,
-                game_map=self.game_map.data
+                game_map=game_map_data
             )
             Renderer.draw_from_z_buffer_walls(
                 canvas=canvas,
@@ -216,7 +216,7 @@ class Engine:
                 path=player_path,
                 mini_map_factor=mini_map_factor
             )
-            self.player.tick()  # move player
+            self.player.tick(game_map_data)  # move player
             self.clock.tick(30)  # make sure game doesn't run at more than 30 frames per second
 
             if self.path:  # move player if the path is set
