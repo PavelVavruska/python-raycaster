@@ -35,9 +35,10 @@ _logger = logging.getLogger(__name__)
 
 class Engine:
 
-    def __init__(self, player, game_map, config):
+    def __init__(self, players, game_map, config):
         # constructor injection
-        self.player = player
+        self.players = players
+        self.player_index = None
         self.game_map = game_map
         self.config = config
 
@@ -54,52 +55,62 @@ class Engine:
         self.clock = pygame.time.Clock()  # initialise clock
         pygame.key.set_repeat(True)  # enable key holding
 
-        # variables
-        self.path = None
+    def handle_events(self, selected_player):
+        mouse_button_left, mouse_button_middle, mouse_button_right = pygame.mouse.get_pressed()
+        mouse_pos_x, mouse_pos_y = pygame.mouse.get_pos()
+        cor_in_map_x = (mouse_pos_x - self.mini_map_offset_x) / Constants.MULTIPLICATOR_MINIMAP
+        cor_in_map_y = mouse_pos_y / Constants.MULTIPLICATOR_MINIMAP
+        cor_in_map_x_flat = int(cor_in_map_x)
+        cor_in_map_y_flat = int(cor_in_map_y)
 
-    def handle_events(self):
+        if mouse_button_left:
+            for player_index, player in enumerate(self.players):
+                if cor_in_map_x - 1 < player.x < cor_in_map_x + 1 and cor_in_map_y - 1 < player.y < cor_in_map_y + 1:
+                    self.player_index = player_index
+                    break
+            else:
+                self.player_index = None  # no player found at this position
+
+
+        if mouse_button_right and selected_player is not None:
+            if (
+                    self.game_map.get_at(cor_in_map_x_flat, cor_in_map_y_flat) == -1 and
+                    mouse_pos_x > self.mini_map_offset_x
+            ):
+                if selected_player.path:
+                    selected_player.path.clear()
+                dijkstra = Dijkstra(
+                    self.game_map.data,
+                    (int(selected_player.x), int(selected_player.y)),
+                    (cor_in_map_x_flat, cor_in_map_y_flat)
+                )
+                try:
+                    dijkstra.start()
+                    selected_player.path = dijkstra.get_shortest_path()
+                except ValueError:
+                    _logger.error('Road must be selected, not wall.')
+                except KeyError:
+                    traceback.print_exc(file=sys.stdout)
+                except IndexError:
+                    traceback.print_exc(file=sys.stdout)
+
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
                 return True
-            elif event.type == pylocs.MOUSEBUTTONDOWN:
-                mouse_pos_x, mouse_pos_y = pygame.mouse.get_pos()
-                cor_in_map_x = int((mouse_pos_x - self.mini_map_offset_x) / Constants.MULTIPLICATOR_MINIMAP)
-                cor_in_map_y = int(mouse_pos_y / Constants.MULTIPLICATOR_MINIMAP)
-                if (
-                        self.game_map.get_at(cor_in_map_x, cor_in_map_y) == -1 and
-                        mouse_pos_x > self.mini_map_offset_x
-                ):
-                    if self.path:
-                        self.path.clear()
-                    dijkstra = Dijkstra(
-                        self.game_map.data,
-                        (int(self.player.x), int(self.player.y)),
-                        (cor_in_map_x, cor_in_map_y)
-                    )
-                    try:
-                        dijkstra.start()
-                        self.path = dijkstra.get_shortest_path()
-                    except ValueError:
-                        _logger.error('Road must be selected, not wall.')
-                    except KeyError:
-                        traceback.print_exc(file=sys.stdout)
-                    except IndexError:
-                        traceback.print_exc(file=sys.stdout)
-
             elif event.type == pylocs.KEYDOWN:
                 if event.key == pylocs.K_w:
-                    self.player.set_velocity_x(self.player.velocity_x + math.cos(math.radians(self.player.angle)) / 5)
-                    self.player.set_velocity_y(self.player.velocity_y + math.sin(math.radians(self.player.angle)) / 5)
+                    selected_player.set_velocity_x(selected_player.velocity_x + math.cos(math.radians(selected_player.angle)) / 5)
+                    selected_player.set_velocity_y(selected_player.velocity_y + math.sin(math.radians(selected_player.angle)) / 5)
 
                 if event.key == pylocs.K_s:
-                    self.player.set_velocity_x(self.player.velocity_x - math.cos(math.radians(self.player.angle)) / 5)
-                    self.player.set_velocity_y(self.player.velocity_y - math.sin(math.radians(self.player.angle)) / 5)
+                    selected_player.set_velocity_x(selected_player.velocity_x - math.cos(math.radians(selected_player.angle)) / 5)
+                    selected_player.set_velocity_y(selected_player.velocity_y - math.sin(math.radians(selected_player.angle)) / 5)
 
                 if event.key == pylocs.K_d:
-                    self.player.set_velocity_angle(self.player.velocity_angle + 5)
+                    selected_player.set_velocity_angle(selected_player.velocity_angle + 5)
 
                 if event.key == pylocs.K_a:
-                    self.player.set_velocity_angle(self.player.velocity_angle - 5)
+                    selected_player.set_velocity_angle(selected_player.velocity_angle - 5)
 
                 if event.key == pylocs.K_p:
                     self.config.toggle_perspective_correction_on()
@@ -116,43 +127,6 @@ class Engine:
                 if event.key == pylocs.K_DOWN:
                     self.config.decrease_pixel_size()
         return False
-
-    def handle_path(self):
-        _, wanted_y, wanted_x = self.path[-1]
-        cur_x = self.player.x
-        cur_y = self.player.y
-        cur_angle = self.player.angle
-
-        wanted_x += Constants.MAP_HALF_COORDINATE
-        wanted_y += Constants.MAP_HALF_COORDINATE
-
-        d_x = wanted_x - cur_x
-        d_y = wanted_y - cur_y
-        d_r = math.atan2(d_y, d_x)
-
-        if cur_x - Constants.MIN_DELTA_POSITION > wanted_x:
-            self.player.set_x(self.player.x - Constants.MIN_DELTA_POSITION)
-        elif cur_x + Constants.MIN_DELTA_POSITION < wanted_x:
-            self.player.set_x(self.player.x + Constants.MIN_DELTA_POSITION)
-
-        if cur_y - Constants.MIN_DELTA_POSITION > wanted_y:
-            self.player.set_y(self.player.y - Constants.MIN_DELTA_POSITION)
-        elif cur_y + Constants.MIN_DELTA_POSITION < wanted_y:
-            self.player.set_y(self.player.y + Constants.MIN_DELTA_POSITION)
-
-        if (
-                cur_x + Constants.MIN_DELTA_POSITION_DOUBLE > wanted_x > cur_x - Constants.MIN_DELTA_POSITION_DOUBLE and
-                cur_y + Constants.MIN_DELTA_POSITION_DOUBLE > wanted_y > cur_y - Constants.MIN_DELTA_POSITION_DOUBLE
-        ):
-            self.path.pop()
-        else:
-            wanted_angle = math.degrees(d_r)
-            wanted_angle %= 360
-
-            if cur_angle - Constants.MIN_DELTA_ANGLE * 3 > wanted_angle:
-                self.player.set_angle(self.player.angle - Constants.MIN_DELTA_ANGLE)
-            elif cur_angle + Constants.MIN_DELTA_ANGLE * 3 < wanted_angle:
-                self.player.set_angle(self.player.angle + Constants.MIN_DELTA_ANGLE)
 
     def activate(self):
         # during game static variables
@@ -173,64 +147,71 @@ class Engine:
         pygame_surface = self.surface
         while 1:  # game engine ticks
             # during game changing variables
-            player_angle = self.player.angle
-            player_pos_x = self.player.x
-            player_pos_y = self.player.y
-            player_path = self.path
+            player_pos_x = None
+            player_pos_y = None
+            player_path = None
+            player_index = self.player_index
+
+            selected_player = self.players[self.player_index] if self.player_index is not None else None  # type: Player
+
+            if self.handle_events(selected_player):
+                return
+
+            for player in self.players:
+                player.tick(game_map_data)
 
             canvas = pygame.PixelArray(pygame_surface)
+            if selected_player:
+                player_angle = selected_player.angle
+                player_pos_x = selected_player.x
+                player_pos_y = selected_player.y
 
-            x_cor_ordered_z_buffer_walls, x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
-                player_angle=player_angle,
-                player_pos_x=player_pos_x,
-                player_pos_y=player_pos_y,
-                config_fov=config_fov,
-                config_pixel_size=config_pixel_size,
-                config_is_perspective_correction_on=config_is_perspective_correction_on,
-                mini_map_offset_x=mini_map_offset_x,
-                game_map_size_x=game_map_size_x,
-                game_map_size_y=game_map_size_y,
-                game_map=game_map_data
-            )
-            Renderer.draw_from_z_buffer_walls(
-                canvas=canvas,
-                dynamic_lighting=config_dynamic_lighting,
-                pixel_size=config_pixel_size,
-                window_height=window_height,
-                x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_walls
-            )
-            Renderer.draw_from_z_buffer_objects(
-                canvas=canvas,
-                dynamic_lighting=config_dynamic_lighting,
-                pixel_size=config_pixel_size,
-                window_height=window_height,
-                x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
-            )
+                x_cor_ordered_z_buffer_walls, x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
+                    player_angle=player_angle,
+                    player_pos_x=player_pos_x,
+                    player_pos_y=player_pos_y,
+                    config_fov=config_fov,
+                    config_pixel_size=config_pixel_size,
+                    config_is_perspective_correction_on=config_is_perspective_correction_on,
+                    mini_map_offset_x=mini_map_offset_x,
+                    game_map_size_x=game_map_size_x,
+                    game_map_size_y=game_map_size_y,
+                    game_map=game_map_data
+                )
+                Renderer.draw_from_z_buffer_walls(
+                    canvas=canvas,
+                    dynamic_lighting=config_dynamic_lighting,
+                    pixel_size=config_pixel_size,
+                    window_height=window_height / 3,
+                    x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_walls
+                )
+                Renderer.draw_from_z_buffer_objects(
+                    canvas=canvas,
+                    dynamic_lighting=config_dynamic_lighting,
+                    pixel_size=config_pixel_size,
+                    window_height=window_height / 3,
+                    x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
+                )
             Renderer.draw_minimap(
                 canvas=canvas,
                 offset_x=mini_map_offset_x,
                 offset_y=mini_map_offset_y,
                 game_map_data=game_map_data,
-                player_x=player_pos_x,
-                player_y=player_pos_y,
-                path=player_path,
+                players=self.players,
+                player_index=self.player_index,
                 mini_map_factor=mini_map_factor
             )
-            self.player.tick(game_map_data)  # move player
+
             self.clock.tick(30)  # make sure game doesn't run at more than 30 frames per second
-
-            if self.path:  # move player if the path is set
-                self.handle_path()
-
-            if self.handle_events():
-                return
 
             screen = pygame.display.get_surface()
             del canvas
             screen.blit(pygame_surface, (0, 0))
-
-            fps = self.font.render(str(int(self.clock.get_fps())), True, pygame.Color('white'))
-            screen.blit(fps, (0, 0))
+            text_list = []
+            text_list.append('FPS: ')
+            text_list.append(str(int(self.clock.get_fps())))
+            fps = self.font.render(' '.join(text_list), True, pygame.Color('white'))
+            screen.blit(fps, (0, window_height/3))
 
             pygame.display.flip()
             pygame_surface.fill((0, 0, 0))

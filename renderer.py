@@ -31,7 +31,7 @@ class Renderer:
             canvas[x + pixel_of_line, y + pixel_of_line] = color
 
     @classmethod
-    def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, player_x, player_y, path, mini_map_factor):
+    def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, players, player_index, mini_map_factor):
 
         # render minimap (player, )
         # draw objects
@@ -52,16 +52,22 @@ class Renderer:
 
         # draw player
         # player base
-        player_on_minimap_x = offset_x + int((-Constants.MAP_HALF_COORDINATE + player_x) * mini_map_factor)
-        player_on_minimap_y = offset_y + int((-Constants.MAP_HALF_COORDINATE + player_y) * mini_map_factor)
+        for index, player in enumerate(players):
+            player_on_minimap_x = offset_x + int((-Constants.MAP_HALF_COORDINATE + player.x) * mini_map_factor)
+            player_on_minimap_y = offset_y + int((-Constants.MAP_HALF_COORDINATE + player.y) * mini_map_factor)
 
-        cls.draw_a_cross(canvas, player_on_minimap_x, player_on_minimap_y, Constants.COLOR_WHITE)
+            cls.draw_a_cross(
+                canvas,
+                player_on_minimap_x,
+                player_on_minimap_y,
+                Constants.COLOR_WHITE if index == player_index else Constants.COLOR_YELLOW
+            )
 
-        if path:
-            for _, point_y, point_x in path:
-                x = offset_x + int(point_x * mini_map_factor)
-                y = offset_y + int(point_y * mini_map_factor)
-                cls.draw_a_cross(canvas, x, y, Constants.COLOR_YELLOW)
+            if player.path:
+                for _, point_y, point_x in player.path:
+                    x = offset_x + int(point_x * mini_map_factor)
+                    y = offset_y + int(point_y * mini_map_factor)
+                    cls.draw_a_cross(canvas, x, y, Constants.COLOR_YELLOW)
 
     @classmethod
     def draw_from_z_buffer_walls(cls, canvas, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):

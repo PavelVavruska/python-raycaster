@@ -17,6 +17,9 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
+from constants import Constants
+import math
+
 MAX_VELOCITY_ANGLE = 10
 MAX_VELOCITY_STEP = 2
 
@@ -29,6 +32,7 @@ class Player:
         self.__velocity_x = 0
         self.__velocity_y = 0
         self.__velocity_angle = 0
+        self.path = None
 
     @property
     def x(self):
@@ -84,6 +88,45 @@ class Player:
         if angle < 0 or angle >= 360:
             self.set_angle(angle % 360)
 
+    def handle_path(self):
+        if self.path is None or len(self.path) < 1:
+            return
+        _, wanted_y, wanted_x = self.path[-1]
+        cur_x = self.x
+        cur_y = self.y
+        cur_angle = self.angle
+
+        wanted_x += Constants.MAP_HALF_COORDINATE
+        wanted_y += Constants.MAP_HALF_COORDINATE
+
+        d_x = wanted_x - cur_x
+        d_y = wanted_y - cur_y
+        d_r = math.atan2(d_y, d_x)
+
+        if cur_x - Constants.MIN_DELTA_POSITION > wanted_x:
+            self.set_x(self.x - Constants.MIN_DELTA_POSITION)
+        elif cur_x + Constants.MIN_DELTA_POSITION < wanted_x:
+            self.set_x(self.x + Constants.MIN_DELTA_POSITION)
+
+        if cur_y - Constants.MIN_DELTA_POSITION > wanted_y:
+            self.set_y(self.y - Constants.MIN_DELTA_POSITION)
+        elif cur_y + Constants.MIN_DELTA_POSITION < wanted_y:
+            self.set_y(self.y + Constants.MIN_DELTA_POSITION)
+
+        if (
+                cur_x + Constants.MIN_DELTA_POSITION_DOUBLE > wanted_x > cur_x - Constants.MIN_DELTA_POSITION_DOUBLE and
+                cur_y + Constants.MIN_DELTA_POSITION_DOUBLE > wanted_y > cur_y - Constants.MIN_DELTA_POSITION_DOUBLE
+        ):
+            self.path.pop()
+        else:
+            wanted_angle = math.degrees(d_r)
+            wanted_angle %= 360
+
+            if cur_angle - Constants.MIN_DELTA_ANGLE * 3 > wanted_angle:
+                self.set_angle(self.angle - Constants.MIN_DELTA_ANGLE)
+            elif cur_angle + Constants.MIN_DELTA_ANGLE * 3 < wanted_angle:
+                self.set_angle(self.angle + Constants.MIN_DELTA_ANGLE)
+
     def move_player_on_map(self, game_map_data):
         player_x = self.x
         player_y = self.y
@@ -116,6 +159,7 @@ class Player:
     def move_player(self, game_map_data):
         self.move_player_on_map(game_map_data)
         self.process_view_angle()
+        self.handle_path()
 
     def tick(self, game_map_data):
         self.move_player(game_map_data)

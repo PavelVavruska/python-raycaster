@@ -24,16 +24,17 @@ _logger = logging.getLogger(__name__)
 
 
 class Dijkstra:
-    open_nodes = dict()
-    closed_nodes = dict()
-    world_map = []
-    start_x = 0
-    start_y = 0
-    end_x = 0
-    end_y = 0
-    shortest_path = []
+
 
     def __init__(self, world_map, start, end):
+        self.open_nodes = dict()
+        self.closed_nodes = dict()
+        self.world_map = []
+        self.start_x = 0
+        self.start_y = 0
+        self.end_x = 0
+        self.end_y = 0
+        self.shortest_path = []
         # set start and end points
         self.start_x, self.start_y = start
         self.end_x, self.end_y = end
@@ -51,6 +52,7 @@ class Dijkstra:
 
     def extract_path_from_closed_nodes(self):
         actual_node = (self.end_y, self.end_x)
+        self.shortest_path = [(0, self.end_y, self.end_x)]  # final position
         while (self.start_y, self.start_x) != actual_node:
             length, pos_y, pos_x = self.closed_nodes[actual_node]
             actual_node = (pos_y, pos_x)
