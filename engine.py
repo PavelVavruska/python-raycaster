@@ -65,7 +65,10 @@ class Engine:
 
         if mouse_button_left:
             for player_index, player in enumerate(self.players):
-                if cor_in_map_x - 1 < player.x < cor_in_map_x + 1 and cor_in_map_y - 1 < player.y < cor_in_map_y + 1:
+                if (
+                        cor_in_map_x - Constants.MAP_HALF_COORDINATE < player.x < cor_in_map_x + Constants.MAP_HALF_COORDINATE and
+                        cor_in_map_y - Constants.MAP_HALF_COORDINATE < player.y < cor_in_map_y + Constants.MAP_HALF_COORDINATE
+                ):
                     self.player_index = player_index
                     break
             else:

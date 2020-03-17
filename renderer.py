@@ -31,6 +31,24 @@ class Renderer:
             canvas[x + pixel_of_line, y + pixel_of_line] = color
 
     @classmethod
+    def draw_a_cross(cls, canvas, x, y, color):
+        # top
+        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 1):
+            canvas[x + Constants.MULTIPLICATOR_MINIMAP - pixel_of_line, y + pixel_of_line] = color
+        # bottom
+        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 1):
+            canvas[x + pixel_of_line, y + pixel_of_line] = color
+
+    @classmethod
+    def draw_a_path_cross(cls, canvas, x, y, color):
+        # bottom
+        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
+            canvas[x + pixel_of_line, y + Constants.MULTIPLICATOR_MINIMAP_HALF] = color
+        # left
+        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
+            canvas[x + Constants.MULTIPLICATOR_MINIMAP_HALF, y + pixel_of_line] = color
+
+    @classmethod
     def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, players, player_index, mini_map_factor):
 
         # render minimap (player, )
@@ -56,6 +74,12 @@ class Renderer:
             player_on_minimap_x = offset_x + int((-Constants.MAP_HALF_COORDINATE + player.x) * mini_map_factor)
             player_on_minimap_y = offset_y + int((-Constants.MAP_HALF_COORDINATE + player.y) * mini_map_factor)
 
+            if player.path:
+                for _, point_y, point_x in player.path:
+                    x = offset_x + int(point_x * mini_map_factor)
+                    y = offset_y + int(point_y * mini_map_factor)
+                    cls.draw_a_path_cross(canvas, x, y, Constants.COLOR_LIGHT_GRAY)
+
             cls.draw_a_cross(
                 canvas,
                 player_on_minimap_x,
@@ -63,11 +87,7 @@ class Renderer:
                 Constants.COLOR_WHITE if index == player_index else Constants.COLOR_YELLOW
             )
 
-            if player.path:
-                for _, point_y, point_x in player.path:
-                    x = offset_x + int(point_x * mini_map_factor)
-                    y = offset_y + int(point_y * mini_map_factor)
-                    cls.draw_a_cross(canvas, x, y, Constants.COLOR_YELLOW)
+
 
     @classmethod
     def draw_from_z_buffer_walls(cls, canvas, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):

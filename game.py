@@ -7,7 +7,7 @@ from models.map import Map
 def main():
     players = []
     for number in range(4):
-        player = Player(1+number, 3, 10*number)
+        player = Player(2, 3+number, 10*number)
         players.append(player)
 
     config = Config(
