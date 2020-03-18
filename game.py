@@ -2,13 +2,11 @@ from engine import Engine
 from models.player import Player
 from models.config import Config
 from models.map import Map
+from pool import ReusablePool
 
 
 def main():
-    players = []
-    for number in range(4):
-        player = Player(2, 3+number, 10*number)
-        players.append(player)
+    players = ReusablePool(50, Player)
 
     config = Config(
         fov=100,

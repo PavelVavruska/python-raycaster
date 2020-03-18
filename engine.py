@@ -38,6 +38,7 @@ class Engine:
     def __init__(self, players, game_map, config):
         # constructor injection
         self.players = players
+        self.round_of_units = []
         self.player_index = None
         self.game_map = game_map
         self.config = config
@@ -64,7 +65,7 @@ class Engine:
         cor_in_map_y_flat = int(cor_in_map_y)
 
         if mouse_button_left:
-            for player_index, player in enumerate(self.players):
+            for player_index, player in enumerate(self.round_of_units):
                 if (
                         cor_in_map_x - Constants.MAP_HALF_COORDINATE < player.x < cor_in_map_x + Constants.MAP_HALF_COORDINATE and
                         cor_in_map_y - Constants.MAP_HALF_COORDINATE < player.y < cor_in_map_y + Constants.MAP_HALF_COORDINATE
@@ -146,6 +147,32 @@ class Engine:
         config_is_perspective_correction_on = self.config.is_perspective_correction_on
         config_dynamic_lighting = self.config.dynamic_lighting
 
+        self.round_of_units = []
+
+        # prepare units for first round
+        for id in range(10):
+            player = self.players.acquire()
+
+            if player.path:
+                player.path.clear()
+            dijkstra = Dijkstra(
+                self.game_map.data,
+                (int(player.x), int(player.y)),
+                (17, 18)
+            )
+            try:
+                dijkstra.start()
+                player.path = dijkstra.get_shortest_path()
+            except ValueError:
+                _logger.error('Road must be selected, not wall.')
+            except KeyError:
+                traceback.print_exc(file=sys.stdout)
+            except IndexError:
+                traceback.print_exc(file=sys.stdout)
+
+            self.round_of_units.append(player)
+
+
         # pygame static variables
         pygame_surface = self.surface
         while 1:  # game engine ticks
@@ -155,12 +182,12 @@ class Engine:
             player_path = None
             player_index = self.player_index
 
-            selected_player = self.players[self.player_index] if self.player_index is not None else None  # type: Player
+            selected_player = self.round_of_units[self.player_index] if self.player_index is not None else None  # type: Player
 
             if self.handle_events(selected_player):
                 return
 
-            for player in self.players:
+            for player in self.round_of_units:
                 player.tick(game_map_data)
 
             canvas = pygame.PixelArray(pygame_surface)
@@ -200,7 +227,7 @@ class Engine:
                 offset_x=mini_map_offset_x,
                 offset_y=mini_map_offset_y,
                 game_map_data=game_map_data,
-                players=self.players,
+                players=self.round_of_units,
                 player_index=self.player_index,
                 mini_map_factor=mini_map_factor
             )

@@ -19,13 +19,14 @@
 
 from constants import Constants
 import math
+import random
 
 MAX_VELOCITY_ANGLE = 10
 MAX_VELOCITY_STEP = 2
 
 
 class Player:
-    def __init__(self, x, y, angle):
+    def __init__(self, x=2, y=2, angle=90, path_speed=None):
         self.__x = x
         self.__y = y
         self.__angle = angle
@@ -33,6 +34,7 @@ class Player:
         self.__velocity_y = 0
         self.__velocity_angle = 0
         self.path = None
+        self.path_speed = path_speed if path_speed is not None else 1+random.random()
 
     @property
     def x(self):
@@ -103,15 +105,17 @@ class Player:
         d_y = wanted_y - cur_y
         d_r = math.atan2(d_y, d_x)
 
-        if cur_x - Constants.MIN_DELTA_POSITION > wanted_x:
-            self.set_x(self.x - Constants.MIN_DELTA_POSITION)
-        elif cur_x + Constants.MIN_DELTA_POSITION < wanted_x:
-            self.set_x(self.x + Constants.MIN_DELTA_POSITION)
+        player_path_speed = self.path_speed * Constants.MIN_DELTA_POSITION
 
-        if cur_y - Constants.MIN_DELTA_POSITION > wanted_y:
-            self.set_y(self.y - Constants.MIN_DELTA_POSITION)
-        elif cur_y + Constants.MIN_DELTA_POSITION < wanted_y:
-            self.set_y(self.y + Constants.MIN_DELTA_POSITION)
+        if cur_x - player_path_speed > wanted_x:
+            self.set_x(self.x - player_path_speed)
+        elif cur_x + player_path_speed < wanted_x:
+            self.set_x(self.x + player_path_speed)
+
+        if cur_y - player_path_speed > wanted_y:
+            self.set_y(self.y - player_path_speed)
+        elif cur_y + player_path_speed < wanted_y:
+            self.set_y(self.y + player_path_speed)
 
         if (
                 cur_x + Constants.MIN_DELTA_POSITION_DOUBLE > wanted_x > cur_x - Constants.MIN_DELTA_POSITION_DOUBLE and
