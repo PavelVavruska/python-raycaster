@@ -101,7 +101,7 @@ class Engine:
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
                 return True
-            elif event.type == pylocs.KEYDOWN:
+            elif event.type == pylocs.KEYDOWN and selected_player is not None:
                 if event.key == pylocs.K_w:
                     selected_player.set_velocity_x(selected_player.velocity_x + math.cos(math.radians(selected_player.angle)) / 5)
                     selected_player.set_velocity_y(selected_player.velocity_y + math.sin(math.radians(selected_player.angle)) / 5)
@@ -140,6 +140,7 @@ class Engine:
         game_map_size_x = self.game_map.size_x
         game_map_size_y = self.game_map.size_y
         game_map_data = self.game_map.data
+        window_width = Constants.WINDOW_WIDTH
         window_height = Constants.WINDOW_HEIGHT
 
         config_fov = self.config.fov
@@ -221,6 +222,13 @@ class Engine:
                     pixel_size=config_pixel_size,
                     window_height=window_height / 3,
                     x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
+                )
+            else:
+                Renderer.draw_noise(
+                    canvas=canvas,
+                    pixel_size=config_pixel_size,
+                    window_width=int(mini_map_offset_x),
+                    window_height=int(window_height / 3)
                 )
             Renderer.draw_minimap(
                 canvas=canvas,

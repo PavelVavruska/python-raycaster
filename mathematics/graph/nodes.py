@@ -43,7 +43,7 @@ class Dijkstra:
         self.world_map = [[-2]*len(world_map) for i in range(len(world_map))]
         for position_y, data_y in enumerate(world_map):
             for position_x, data_x in enumerate(data_y):
-                if data_x == -1:
+                if data_x < 10:  # not a wall
                     self.world_map[position_y][position_x] = 999
 
     def get_shortest_path(self):

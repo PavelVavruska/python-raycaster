@@ -5,6 +5,7 @@ from PIL import Image
 class Renderer:
     texture = Image.open("static/textures.png")
     pixel_data = texture.load()
+    noise_y = 0
 
     @classmethod
     def draw_a_squere(cls, canvas, x, y, color):
@@ -57,8 +58,10 @@ class Renderer:
             for id_x, x in enumerate(y):
                 if x < 0:
                     color = Constants.COLOR_GRAY
-                elif 0 <= x < 9:
+                elif x < 6:
                     color = Constants.COLOR_RED
+                elif x == 6:
+                    color = Constants.COLOR_WHITE
                 else:
                     color = Constants.COLOR_GREEN
                 cls.draw_a_squere(
@@ -178,4 +181,17 @@ class Renderer:
                                 if 0 < y < window_height:
                                     canvas[real_x, y] = result_color_tuple
                     last_pixel_position = current_pixel_position
+
+    @classmethod
+    def draw_noise(cls, canvas, pixel_size, window_width, window_height):
+        position_of_scanning_line_y = cls.noise_y
+        cls.noise_y += 1
+        if cls.noise_y > window_height:
+            cls.noise_y = 0
+        for x in range(window_width):
+            canvas[x, position_of_scanning_line_y] = (
+                0,
+                255,
+                0
+            )
 
