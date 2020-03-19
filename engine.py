@@ -100,22 +100,11 @@ class Engine:
                     self.game_map.get_at(cor_in_map_x_flat, cor_in_map_y_flat) == -1 and
                     mouse_pos_x > self.mini_map_offset_x
             ):
-                if selected_player.path:
-                    selected_player.path.clear()
-                dijkstra = Dijkstra(
-                    self.game_map.data,
+                self.update_path_for_unit(
+                    selected_player,
                     (int(selected_player.x), int(selected_player.y)),
                     (cor_in_map_x_flat, cor_in_map_y_flat)
                 )
-                try:
-                    dijkstra.start()
-                    selected_player.path = dijkstra.get_shortest_path()
-                except ValueError:
-                    _logger.error('Road must be selected, not wall.')
-                except KeyError:
-                    traceback.print_exc(file=sys.stdout)
-                except IndexError:
-                    traceback.print_exc(file=sys.stdout)
 
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
@@ -185,13 +174,19 @@ class Engine:
         unit.set_y(begin_y)
         self.update_path_for_unit(unit)
 
-    def update_path_for_unit(self, unit):
+    def update_path_for_unit(self, unit, start_coordinates=None, end_coordinates=None):
         if unit.path:
             unit.path.clear()
+
+        if start_coordinates is None:
+            start_coordinates=(int(unit.x), int(unit.y))
+        if end_coordinates is None:
+            end_coordinates=self.foes_end
+
         dijkstra = Dijkstra(
             self.game_map.data,
-            (int(unit.x), int(unit.y)),  # (int(player.x), int(player.y)),
-            self.foes_end  # (17, 18)
+            start_coordinates,
+            end_coordinates
         )
         try:
             dijkstra.start()
