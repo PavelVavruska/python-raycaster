@@ -24,10 +24,15 @@ import traceback
 import pygame
 import pygame.locals as pylocs
 
+from typing import TYPE_CHECKING
+
 from mathematics.graph.nodes import Dijkstra
 from constants import Constants
 from renderer import Renderer
 from mathematics.raycasting.raycaster import Raycaster
+
+if TYPE_CHECKING:
+    from models.player import Player
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -117,7 +122,11 @@ class Engine:
                 return True
             elif event.type == pylocs.KEYDOWN:
                 if event.key == pylocs.K_g and self.selected_position is not None:
-                    self.game_map.set_at(self.selected_position[0], self.selected_position[1], 10)
+                    position_x, position_y = self.selected_position
+                    self.game_map.set_at(position_x, position_y, 10)
+                    units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), False)
+                    self.update_path_for_units(units_with_changed_path)
+                    # refresh all the parths!
 
                 if event.key == pylocs.K_p:
                     self.config.toggle_perspective_correction_on()
@@ -151,6 +160,50 @@ class Engine:
 
         return False
 
+    @classmethod
+    def get_all_units_affected_by_change(cls, all_units, changed_map_position, change_to_empty):
+        if change_to_empty:
+            return all_units
+        # if changed to wall, recalculate only if the wall is on the path
+        units_to_update = []
+        for unit in all_units:  # type: Player
+            unit_path = unit.path
+            if unit_path is not None:
+                for _, point_position_y, point_position_x in unit_path:
+                    if (point_position_x, point_position_y) == changed_map_position:
+                        units_to_update.append(unit)
+                        break
+        return units_to_update
+
+    def update_path_for_units(self, all_units):
+        for unit in all_units:
+            self.update_path_for_unit(unit)
+
+    def update_path_for_unit_from_begin(self, unit):
+        begin_x, begin_y = self.foes_begin
+        unit.set_x(begin_x)
+        unit.set_y(begin_y)
+        self.update_path_for_unit(unit)
+
+    def update_path_for_unit(self, unit):
+        if unit.path:
+            unit.path.clear()
+        dijkstra = Dijkstra(
+            self.game_map.data,
+            (int(unit.x), int(unit.y)),  # (int(player.x), int(player.y)),
+            self.foes_end  # (17, 18)
+        )
+        try:
+            dijkstra.start()
+            unit.path = dijkstra.get_shortest_path()
+        except ValueError:
+            _logger.error('Road must be selected, not wall.')
+        except KeyError:
+            traceback.print_exc(file=sys.stdout)
+        except IndexError:
+            traceback.print_exc(file=sys.stdout)
+
+
     def activate(self):
         # during game static variables
         mini_map_offset_x = self.mini_map_offset_x
@@ -181,27 +234,8 @@ class Engine:
                     player = self.players.acquire()
                     if player is None:
                         break
-                    begin_x, begin_y = self.foes_begin
-                    player.set_x(begin_x)
-                    player.set_y(begin_y)
 
-                    if player.path:
-                        player.path.clear()
-                    dijkstra = Dijkstra(
-                        self.game_map.data,
-                        self.foes_begin,  # (int(player.x), int(player.y)),
-                        self.foes_end  # (17, 18)
-                    )
-                    try:
-                        dijkstra.start()
-                        player.path = dijkstra.get_shortest_path()
-                    except ValueError:
-                        _logger.error('Road must be selected, not wall.')
-                    except KeyError:
-                        traceback.print_exc(file=sys.stdout)
-                    except IndexError:
-                        traceback.print_exc(file=sys.stdout)
-
+                    self.update_path_for_unit_from_begin(player)
                     self.round_of_units.append(player)
             if self.health < 1:
                 # gameover
