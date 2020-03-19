@@ -50,7 +50,7 @@ class Renderer:
             canvas[x + Constants.MULTIPLICATOR_MINIMAP_HALF, y + pixel_of_line] = color
 
     @classmethod
-    def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, players, player_index, mini_map_factor):
+    def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, players, player_index, selected_position, mini_map_factor):
 
         # render minimap (player, )
         # draw objects
@@ -83,11 +83,20 @@ class Renderer:
                     y = offset_y + int(point_y * mini_map_factor)
                     cls.draw_a_path_cross(canvas, x, y, Constants.COLOR_LIGHT_GRAY)
 
+            team_color = Constants.COLOR_GREEN if player.ally else Constants.COLOR_RED
             cls.draw_a_cross(
                 canvas,
                 player_on_minimap_x,
                 player_on_minimap_y,
-                Constants.COLOR_WHITE if index == player_index else Constants.COLOR_YELLOW
+                Constants.COLOR_WHITE if index == player_index else team_color
+            )
+
+        if selected_position:
+            cls.draw_a_cross(
+                canvas,
+                2+offset_x + selected_position[0] * mini_map_factor,
+                2+offset_y + selected_position[1] * mini_map_factor,
+                Constants.COLOR_BLUE
             )
 
 

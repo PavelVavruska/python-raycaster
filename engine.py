@@ -48,6 +48,9 @@ class Engine:
         self.engine_tick = 1
         self.engine_level = 1
 
+        # map
+        self.selected_position = None  # e.g.(3, 2)
+
         # mobs
         self.foes_begin = (3, 2)
         self.foes_end = (17, 18)
@@ -80,9 +83,11 @@ class Engine:
                         cor_in_map_y - Constants.MAP_HALF_COORDINATE < player.y < cor_in_map_y + Constants.MAP_HALF_COORDINATE
                 ):
                     self.player_index = player_index
+                    self.selected_position = None
                     break
             else:
                 self.player_index = None  # no player found at this position
+                self.selected_position = (cor_in_map_x_flat, cor_in_map_y_flat)
 
 
         if mouse_button_right and selected_player is not None:
@@ -110,20 +115,9 @@ class Engine:
         for event in pygame.event.get():
             if event.type == pylocs.QUIT:
                 return True
-            elif event.type == pylocs.KEYDOWN and selected_player is not None:
-                if event.key == pylocs.K_w:
-                    selected_player.set_velocity_x(selected_player.velocity_x + math.cos(math.radians(selected_player.angle)) / 5)
-                    selected_player.set_velocity_y(selected_player.velocity_y + math.sin(math.radians(selected_player.angle)) / 5)
-
-                if event.key == pylocs.K_s:
-                    selected_player.set_velocity_x(selected_player.velocity_x - math.cos(math.radians(selected_player.angle)) / 5)
-                    selected_player.set_velocity_y(selected_player.velocity_y - math.sin(math.radians(selected_player.angle)) / 5)
-
-                if event.key == pylocs.K_d:
-                    selected_player.set_velocity_angle(selected_player.velocity_angle + 5)
-
-                if event.key == pylocs.K_a:
-                    selected_player.set_velocity_angle(selected_player.velocity_angle - 5)
+            elif event.type == pylocs.KEYDOWN:
+                if event.key == pylocs.K_g and self.selected_position is not None:
+                    self.game_map.set_at(self.selected_position[0], self.selected_position[1], 10)
 
                 if event.key == pylocs.K_p:
                     self.config.toggle_perspective_correction_on()
@@ -139,6 +133,22 @@ class Engine:
 
                 if event.key == pylocs.K_DOWN:
                     self.config.decrease_pixel_size()
+
+                if selected_player is not None:
+                    if event.key == pylocs.K_w:
+                        selected_player.set_velocity_x(selected_player.velocity_x + math.cos(math.radians(selected_player.angle)) / 5)
+                        selected_player.set_velocity_y(selected_player.velocity_y + math.sin(math.radians(selected_player.angle)) / 5)
+
+                    if event.key == pylocs.K_s:
+                        selected_player.set_velocity_x(selected_player.velocity_x - math.cos(math.radians(selected_player.angle)) / 5)
+                        selected_player.set_velocity_y(selected_player.velocity_y - math.sin(math.radians(selected_player.angle)) / 5)
+
+                    if event.key == pylocs.K_d:
+                        selected_player.set_velocity_angle(selected_player.velocity_angle + 5)
+
+                    if event.key == pylocs.K_a:
+                        selected_player.set_velocity_angle(selected_player.velocity_angle - 5)
+
         return False
 
     def activate(self):
@@ -266,6 +276,7 @@ class Engine:
                 game_map_data=game_map_data,
                 players=self.round_of_units,
                 player_index=self.player_index,
+                selected_position=self.selected_position,
                 mini_map_factor=mini_map_factor
             )
 

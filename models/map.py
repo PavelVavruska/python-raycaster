@@ -59,4 +59,7 @@ class Map:
         return self.__map
 
     def get_at(self, x, y):
-        return self.__map[x][y]
+        return self.__map[y][x]
+
+    def set_at(self, x, y, number):
+        self.data[y][x] = number

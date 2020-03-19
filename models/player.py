@@ -26,7 +26,7 @@ MAX_VELOCITY_STEP = 2
 
 
 class Player:
-    def __init__(self, x=2, y=2, angle=90, path_speed=None):
+    def __init__(self, x=2, y=2, angle=90, path_speed=None, ally=False):
         self.__x = x
         self.__y = y
         self.__angle = angle
@@ -35,6 +35,7 @@ class Player:
         self.__velocity_angle = 0
         self.path = None
         self.path_speed = path_speed if path_speed is not None else 1+random.random()
+        self.ally = ally
 
     @property
     def x(self):
