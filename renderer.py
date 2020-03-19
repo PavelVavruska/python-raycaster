@@ -25,10 +25,10 @@ class Renderer:
     @classmethod
     def draw_a_cross(cls, canvas, x, y, color):
         # top
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 1):
+        for pixel_of_line in range(10, Constants.MULTIPLICATOR_MINIMAP - 10):
             canvas[x + Constants.MULTIPLICATOR_MINIMAP - pixel_of_line, y + pixel_of_line] = color
         # bottom
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 1):
+        for pixel_of_line in range(10, Constants.MULTIPLICATOR_MINIMAP - 10):
             canvas[x + pixel_of_line, y + pixel_of_line] = color
 
     @classmethod
@@ -183,15 +183,17 @@ class Renderer:
                     last_pixel_position = current_pixel_position
 
     @classmethod
-    def draw_noise(cls, canvas, pixel_size, window_width, window_height):
+    def draw_disabled_screen(cls, canvas, pixel_size, window_width, window_height):
+        gradient_range=10
         position_of_scanning_line_y = cls.noise_y
-        cls.noise_y += 1
+        cls.noise_y += 2
         if cls.noise_y > window_height:
-            cls.noise_y = 0
+            cls.noise_y = gradient_range
         for x in range(window_width):
-            canvas[x, position_of_scanning_line_y] = (
-                0,
-                255,
-                0
-            )
+            for y in range(gradient_range):
+                canvas[x, position_of_scanning_line_y-y] = (
+                    0,
+                    255-y*25,
+                    0
+                )
 

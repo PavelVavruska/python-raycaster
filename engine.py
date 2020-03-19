@@ -43,6 +43,15 @@ class Engine:
         self.game_map = game_map
         self.config = config
 
+        # game stats
+        self.health = 100
+        self.engine_tick = 1
+        self.engine_level = 1
+
+        # mobs
+        self.foes_begin = (3, 2)
+        self.foes_end = (17, 18)
+
         # canvas positioning
         self.mini_map_offset_x = Constants.WINDOW_WIDTH - game_map.size_x * Constants.MULTIPLICATOR_MINIMAP
         self.mini_map_offset_y = 0
@@ -149,34 +158,46 @@ class Engine:
         config_dynamic_lighting = self.config.dynamic_lighting
 
         self.round_of_units = []
-
-        # prepare units for first round
-        for id in range(10):
-            player = self.players.acquire()
-
-            if player.path:
-                player.path.clear()
-            dijkstra = Dijkstra(
-                self.game_map.data,
-                (int(player.x), int(player.y)),
-                (17, 18)
-            )
-            try:
-                dijkstra.start()
-                player.path = dijkstra.get_shortest_path()
-            except ValueError:
-                _logger.error('Road must be selected, not wall.')
-            except KeyError:
-                traceback.print_exc(file=sys.stdout)
-            except IndexError:
-                traceback.print_exc(file=sys.stdout)
-
-            self.round_of_units.append(player)
-
-
         # pygame static variables
         pygame_surface = self.surface
         while 1:  # game engine ticks
+            self.engine_tick+=1
+
+            if self.engine_tick > 100:
+                self.engine_level += 1
+                self.engine_tick = 1
+                # prepare units for first round
+                for _ in range(self.engine_level):
+                    player = self.players.acquire()
+                    if player is None:
+                        break
+                    begin_x, begin_y = self.foes_begin
+                    player.set_x(begin_x)
+                    player.set_y(begin_y)
+
+                    if player.path:
+                        player.path.clear()
+                    dijkstra = Dijkstra(
+                        self.game_map.data,
+                        self.foes_begin,  # (int(player.x), int(player.y)),
+                        self.foes_end  # (17, 18)
+                    )
+                    try:
+                        dijkstra.start()
+                        player.path = dijkstra.get_shortest_path()
+                    except ValueError:
+                        _logger.error('Road must be selected, not wall.')
+                    except KeyError:
+                        traceback.print_exc(file=sys.stdout)
+                    except IndexError:
+                        traceback.print_exc(file=sys.stdout)
+
+                    self.round_of_units.append(player)
+            if self.health < 1:
+                # gameover
+                self.health = 100
+                self.engine_level = 1
+
             # during game changing variables
             player_pos_x = None
             player_pos_y = None
@@ -188,8 +209,16 @@ class Engine:
             if self.handle_events(selected_player):
                 return
 
+            players_to_delete = []
             for player in self.round_of_units:
                 player.tick(game_map_data)
+                if (int(player.x), int(player.y)) == self.foes_end:
+                    self.health -= 1
+                    self.players.release(player)
+                    players_to_delete.append(player)
+
+            for player in players_to_delete:
+                self.round_of_units.remove(player)
 
             canvas = pygame.PixelArray(pygame_surface)
             if selected_player:
@@ -224,7 +253,7 @@ class Engine:
                     x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
                 )
             else:
-                Renderer.draw_noise(
+                Renderer.draw_disabled_screen(
                     canvas=canvas,
                     pixel_size=config_pixel_size,
                     window_width=int(mini_map_offset_x),
@@ -249,7 +278,15 @@ class Engine:
             text_list.append('FPS: ')
             text_list.append(str(int(self.clock.get_fps())))
             fps = self.font.render(' '.join(text_list), True, pygame.Color('white'))
+            health_list = []
+            health_list.append('Health: ')
+            health_list.append(str(self.health))
+            health_list.append('Level: ')
+            health_list.append(str(self.engine_level))
+            health_list.append('Tick: ')
+            health_list.append(str(self.engine_tick))
+            health = self.font.render(' '.join(health_list), True, pygame.Color('white'))
             screen.blit(fps, (0, window_height/3))
-
+            screen.blit(health, (0, window_height / 3 + 40))
             pygame.display.flip()
             pygame_surface.fill((0, 0, 0))
