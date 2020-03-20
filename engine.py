@@ -112,10 +112,9 @@ class Engine:
             elif event.type == pylocs.KEYDOWN:
                 if event.key == pylocs.K_g and self.selected_position is not None:
                     position_x, position_y = self.selected_position
-                    self.game_map.set_at(position_x, position_y, 10)
+                    self.game_map.set_at(position_x, position_y, 6)
                     units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), False)
                     self.update_path_for_units(units_with_changed_path)
-                    # refresh all the parths!
 
                 if event.key == pylocs.K_p:
                     self.config.toggle_perspective_correction_on()
