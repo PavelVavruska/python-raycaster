@@ -1,56 +1,17 @@
 from constants import Constants
 from PIL import Image
+from renderers.linebyline import LineByLine
+import pygame
 
 
 class Renderer:
     texture = Image.open("static/textures.png")
     pixel_data = texture.load()
     noise_y = 0
+    renderer = LineByLine
 
     @classmethod
-    def draw_a_squere(cls, canvas, x, y, color):
-        # top
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
-            canvas[x + pixel_of_line, y] = color
-        # bottom
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
-            canvas[x + pixel_of_line, Constants.MULTIPLICATOR_MINIMAP - 2 + y] = color
-        # left
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
-            canvas[x, y + pixel_of_line] = color
-        # right
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
-            canvas[x + Constants.MULTIPLICATOR_MINIMAP - 2, y + pixel_of_line] = color
-
-    @classmethod
-    def draw_a_cross(cls, canvas, x, y, color):
-        # top
-        for pixel_of_line in range(10, Constants.MULTIPLICATOR_MINIMAP - 10):
-            canvas[x + Constants.MULTIPLICATOR_MINIMAP - pixel_of_line, y + pixel_of_line] = color
-        # bottom
-        for pixel_of_line in range(10, Constants.MULTIPLICATOR_MINIMAP - 10):
-            canvas[x + pixel_of_line, y + pixel_of_line] = color
-
-    @classmethod
-    def draw_a_cross(cls, canvas, x, y, color):
-        # top
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 1):
-            canvas[x + Constants.MULTIPLICATOR_MINIMAP - pixel_of_line, y + pixel_of_line] = color
-        # bottom
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 1):
-            canvas[x + pixel_of_line, y + pixel_of_line] = color
-
-    @classmethod
-    def draw_a_path_cross(cls, canvas, x, y, color):
-        # bottom
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
-            canvas[x + pixel_of_line, y + Constants.MULTIPLICATOR_MINIMAP_HALF] = color
-        # left
-        for pixel_of_line in range(1, Constants.MULTIPLICATOR_MINIMAP - 2):
-            canvas[x + Constants.MULTIPLICATOR_MINIMAP_HALF, y + pixel_of_line] = color
-
-    @classmethod
-    def draw_minimap(cls, canvas, offset_x, offset_y, game_map_data, players, player_index, selected_position, mini_map_factor):
+    def draw_minimap(cls, surface, offset_x, offset_y, game_map_data, players, player_index, selected_position, mini_map_factor):
 
         # render minimap (player, )
         # draw objects
@@ -64,8 +25,8 @@ class Renderer:
                     color = Constants.COLOR_WHITE
                 else:
                     color = Constants.COLOR_GREEN
-                cls.draw_a_squere(
-                    canvas,
+                cls.renderer.draw_a_squere(
+                    surface,
                     offset_x + id_x * mini_map_factor,
                     offset_y + id_y * mini_map_factor,
                     color
@@ -81,19 +42,19 @@ class Renderer:
                 for _, point_y, point_x in player.path:
                     x = offset_x + int(point_x * mini_map_factor)
                     y = offset_y + int(point_y * mini_map_factor)
-                    cls.draw_a_path_cross(canvas, x, y, Constants.COLOR_LIGHT_GRAY)
+                    cls.renderer.draw_a_path_cross(surface, x, y, Constants.COLOR_LIGHT_GRAY)
 
             team_color = Constants.COLOR_GREEN if player.ally else Constants.COLOR_RED
-            cls.draw_a_cross(
-                canvas,
+            cls.renderer.draw_a_cross(
+                surface,
                 player_on_minimap_x,
                 player_on_minimap_y,
                 Constants.COLOR_WHITE if index == player_index else team_color
             )
 
         if selected_position:
-            cls.draw_a_cross(
-                canvas,
+            cls.renderer.draw_a_cross(
+                surface,
                 2+offset_x + selected_position[0] * mini_map_factor,
                 2+offset_y + selected_position[1] * mini_map_factor,
                 Constants.COLOR_BLUE
@@ -102,7 +63,7 @@ class Renderer:
 
 
     @classmethod
-    def draw_from_z_buffer_walls(cls, canvas, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
+    def draw_from_z_buffer_walls(cls, surface, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
         half_window_height = window_height / 2
         double_window_height = window_height * 2
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
@@ -138,15 +99,19 @@ class Renderer:
                     current_pixel_position = start + vertical_wall_pixel
                     for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1),
                                    int(current_pixel_position)):
-                        for a in range(pixel_size):
-                            real_x = screen_x + a
-                            if 0 < y < window_height:
-                                canvas[real_x, y] = result_color_tuple
+                        pygame.draw.line(surface, result_color_tuple, (screen_x, y),
+                                         (
+                                         screen_x, y + pixel_size),
+                                         2)
+                        #for a in range(pixel_size):
+                        #    real_x = screen_x + a
+                        #    if 0 < y < window_height:
+                        #        surface[real_x, y] = result_color_tuple
                     last_pixel_position = current_pixel_position
                 break
 
     @classmethod
-    def draw_from_z_buffer_objects(cls, canvas, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
+    def draw_from_z_buffer_objects(cls, surface, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
         half_window_height = window_height / 2
         double_window_height = window_height * 2
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
@@ -185,24 +150,25 @@ class Renderer:
 
                         for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1),
                                        int(current_pixel_position)):
-                            for a in range(pixel_size):
-                                real_x = screen_x + a
-                                if 0 < y < window_height:
-                                    canvas[real_x, y] = result_color_tuple
+                            pygame.draw.line(surface, result_color_tuple, (screen_x, y),
+                                             (
+                                                 screen_x, y + pixel_size),
+                                             2)
                     last_pixel_position = current_pixel_position
 
     @classmethod
-    def draw_disabled_screen(cls, canvas, pixel_size, window_width, window_height):
+    def draw_disabled_screen(cls, surface, pixel_size, window_width, window_height):
         gradient_range=10
         position_of_scanning_line_y = cls.noise_y
         cls.noise_y += 2
         if cls.noise_y > window_height:
             cls.noise_y = gradient_range
-        for x in range(window_width):
-            for y in range(gradient_range):
-                canvas[x, position_of_scanning_line_y-y] = (
-                    0,
-                    255-y*25,
-                    0
-                )
+
+        for y in range(gradient_range):
+            pygame.draw.line(surface, (
+                0,
+                255-y*25,
+                0
+            ), (0, position_of_scanning_line_y - y), (window_width, position_of_scanning_line_y - y), 1)
+
 

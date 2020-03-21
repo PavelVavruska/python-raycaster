@@ -267,7 +267,7 @@ class Engine:
             for player in players_to_delete:
                 self.round_of_units.remove(player)
 
-            canvas = pygame.PixelArray(pygame_surface)
+            #canvas = pygame.PixelArray(pygame_surface)
             if selected_player:
                 player_angle = selected_player.angle
                 player_pos_x = selected_player.x
@@ -286,14 +286,14 @@ class Engine:
                     game_map=game_map_data
                 )
                 Renderer.draw_from_z_buffer_walls(
-                    canvas=canvas,
+                    surface=pygame_surface,
                     dynamic_lighting=config_dynamic_lighting,
                     pixel_size=config_pixel_size,
                     window_height=window_height / 3,
                     x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_walls
                 )
                 Renderer.draw_from_z_buffer_objects(
-                    canvas=canvas,
+                    surface=pygame_surface,
                     dynamic_lighting=config_dynamic_lighting,
                     pixel_size=config_pixel_size,
                     window_height=window_height / 3,
@@ -301,13 +301,13 @@ class Engine:
                 )
             else:
                 Renderer.draw_disabled_screen(
-                    canvas=canvas,
+                    surface=pygame_surface,
                     pixel_size=config_pixel_size,
                     window_width=int(mini_map_offset_x),
                     window_height=int(window_height / 3)
                 )
             Renderer.draw_minimap(
-                canvas=canvas,
+                surface=pygame_surface,
                 offset_x=mini_map_offset_x,
                 offset_y=mini_map_offset_y,
                 game_map_data=game_map_data,
@@ -320,7 +320,7 @@ class Engine:
             self.clock.tick(30)  # make sure game doesn't run at more than 30 frames per second
 
             screen = pygame.display.get_surface()
-            del canvas
+
             screen.blit(pygame_surface, (0, 0))
             text_list = []
             text_list.append('FPS: ')
