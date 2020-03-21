@@ -177,4 +177,3 @@ class Player:
 
     def effect_player(self, game_map_effect_data):
         self.health += game_map_effect_data[int(self.y)][int(self.x)]
-        test = 1
