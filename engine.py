@@ -117,6 +117,7 @@ class Engine:
                         self.game_map.set_at(position_x, position_y, 6)
                     units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), False)
                     self.update_path_for_units(units_with_changed_path)
+                    self.update_effects_on_map(self.selected_position, deleted=False)
 
                 if event.key == pylocs.K_h and self.selected_position is not None:
                     position_x, position_y = self.selected_position
@@ -124,6 +125,7 @@ class Engine:
                         self.game_map.set_at(position_x, position_y, -1)
                     units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), True)
                     self.update_path_for_units(units_with_changed_path)
+                    self.update_effects_on_map(self.selected_position, deleted=True)
 
                 if event.key == pylocs.K_p:
                     self.config.toggle_perspective_correction_on()
@@ -215,6 +217,7 @@ class Engine:
         game_map_size_x = self.game_map.size_x
         game_map_size_y = self.game_map.size_y
         game_map_data = self.game_map.data
+        game_map_effect_data = self.game_map.effect_data
         window_width = Constants.WINDOW_WIDTH
         window_height = Constants.WINDOW_HEIGHT
 
@@ -258,9 +261,11 @@ class Engine:
 
             players_to_delete = []
             for player in self.round_of_units:
-                player.tick(game_map_data)
+                is_dead = player.tick(game_map_data, game_map_effect_data)
                 if (int(player.x), int(player.y)) == self.foes_end:
                     self.health -= 1
+                    is_dead = True
+                if is_dead:
                     self.players.release(player)
                     players_to_delete.append(player)
 
@@ -338,3 +343,15 @@ class Engine:
             screen.blit(health, (0, window_height / 3 + 40))
             pygame.display.flip()
             pygame_surface.fill((0, 0, 0))
+
+    def update_effects_on_map(self, position, deleted=False):
+        pos_x, pos_y = position
+        effect = 1 if deleted else -1
+        for y in range(pos_y-1, pos_y+1):
+            for x in range(pos_x - 1, pos_x + 1):
+                original_effect = self.game_map.get_effect_at(x,y)
+                new_effect = original_effect + effect
+                if effect > 0:
+                    continue
+                self.game_map.set_effect_at(x, y, new_effect)
+

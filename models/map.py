@@ -21,7 +21,7 @@
 class Map:
 
     def __init__(self):
-        self.__map = [
+        self.__map_base = [
             [10, 10, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 14, 14, 14],
             [10, -1,000, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1, 12, 14, -1, -1, -1, -1, 14],
             [10, -1, -1, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14],
@@ -43,8 +43,9 @@ class Map:
             [10, -1, -1, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1, 12, 14, -1, -1,000, -1, 14],
             [10, 10, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 14, 14, 14]
         ]
-        self.__size_x = len(self.__map)
-        self.__size_y = len(self.__map[0])
+        self.__size_y = len(self.__map_base)
+        self.__size_x = len(self.__map_base[0])
+        self.__map_effects = [[0]*self.__size_y for i in range(self.__size_x)]
 
     @property
     def size_x(self):
@@ -56,10 +57,20 @@ class Map:
 
     @property
     def data(self):
-        return self.__map
+        return self.__map_base
 
     def get_at(self, x, y):
-        return self.__map[y][x]
+        return self.__map_base[y][x]
 
     def set_at(self, x, y, number):
         self.data[y][x] = number
+
+    def get_effect_at(self, x, y):
+        return self.__map_effects[y][x]
+
+    def set_effect_at(self, x, y, number):
+        self.__map_effects[y][x] = number
+
+    @property
+    def effect_data(self):
+        return self.__map_effects

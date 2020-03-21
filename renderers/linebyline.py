@@ -4,26 +4,26 @@ import pygame
 
 class LineByLine:
     @classmethod
-    def draw_a_squere(cls, canvas, x, y, color):
-        squere = pygame.Rect(
+    def draw_a_square(cls, surface, x, y, color):
+        square = pygame.Rect(
             (x + 1, y + 1),
             (Constants.MULTIPLICATOR_MINIMAP - 1, Constants.MULTIPLICATOR_MINIMAP - 1)
         )
-        pygame.draw.rect(canvas, color, squere)
+        pygame.draw.rect(surface, color, square)
 
     @classmethod
-    def draw_a_cross(cls, canvas, x, y, color):
-        pygame.draw.line(canvas, color, (x, y),
+    def draw_a_cross(cls, surface, x, y, color):
+        pygame.draw.line(surface, color, (x, y),
                          (x + Constants.MULTIPLICATOR_MINIMAP, y + Constants.MULTIPLICATOR_MINIMAP), 1)
 
-        pygame.draw.line(canvas, color, (x, y + Constants.MULTIPLICATOR_MINIMAP),
+        pygame.draw.line(surface, color, (x, y + Constants.MULTIPLICATOR_MINIMAP),
                          (x + Constants.MULTIPLICATOR_MINIMAP, y), 1)
 
     @classmethod
-    def draw_a_path_cross(cls, canvas, x, y, color):
+    def draw_a_path_cross(cls, surface, x, y, color):
         # vertical
-        pygame.draw.line(canvas, color, (x + Constants.MULTIPLICATOR_MINIMAP_HALF, y),
+        pygame.draw.line(surface, color, (x + Constants.MULTIPLICATOR_MINIMAP_HALF, y),
                          (x + Constants.MULTIPLICATOR_MINIMAP_HALF, y + Constants.MULTIPLICATOR_MINIMAP), 1)
         # horizontal
-        pygame.draw.line(canvas, color, (x, y + Constants.MULTIPLICATOR_MINIMAP_HALF),
+        pygame.draw.line(surface, color, (x, y + Constants.MULTIPLICATOR_MINIMAP_HALF),
                          (x + Constants.MULTIPLICATOR_MINIMAP, y + Constants.MULTIPLICATOR_MINIMAP_HALF), 1)

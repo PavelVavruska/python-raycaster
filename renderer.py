@@ -25,7 +25,7 @@ class Renderer:
                     color = Constants.COLOR_WHITE
                 else:
                     color = Constants.COLOR_GREEN
-                cls.renderer.draw_a_squere(
+                cls.renderer.draw_a_square(
                     surface,
                     offset_x + id_x * mini_map_factor,
                     offset_y + id_y * mini_map_factor,
@@ -114,7 +114,7 @@ class Renderer:
             for entry in reversed(z_buffer_wall):
                 # actual line by line rendering of the visible object
                 object_distance, object_id = entry
-                if object_distance < 0.4:  # skip render distance is too short
+                if object_distance < 0.5:  # skip render distance is too short
                     continue
                 start = int(half_window_height - window_height / (object_distance * 2))
                 wall_vertical_length_full = double_window_height / (object_distance * 2)

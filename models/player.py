@@ -36,6 +36,7 @@ class Player:
         self.path = None
         self.path_speed = path_speed if path_speed is not None else 1+random.random()
         self.ally = ally
+        self.health = 100
 
     @property
     def x(self):
@@ -166,8 +167,14 @@ class Player:
         self.process_view_angle()
         self.handle_path()
 
-    def tick(self, game_map_data):
+    def tick(self, game_map_data, game_map_effect_data):
         self.move_player(game_map_data)
+        self.effect_player(game_map_effect_data)
+        return True if self.health <= 0 else False
 
     def __str__(self):
         return u'Player: x {0:f}, y {1:f}, < {2:f}'.format(self.x, self.y, self.angle)
+
+    def effect_player(self, game_map_effect_data):
+        self.health += game_map_effect_data[int(self.y)][int(self.x)]
+        test = 1
