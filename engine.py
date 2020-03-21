@@ -33,6 +33,7 @@ from mathematics.raycasting.raycaster import Raycaster
 
 if TYPE_CHECKING:
     from models.player import Player
+    from models.map import Map
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class Engine:
         self.players = players
         self.round_of_units = []
         self.player_index = None
-        self.game_map = game_map
+        self.game_map = game_map  # type: Map
         self.config = config
 
         # game stats
@@ -112,8 +113,16 @@ class Engine:
             elif event.type == pylocs.KEYDOWN:
                 if event.key == pylocs.K_g and self.selected_position is not None:
                     position_x, position_y = self.selected_position
-                    self.game_map.set_at(position_x, position_y, 6)
+                    if self.game_map.get_at(position_x, position_y) <= 0:
+                        self.game_map.set_at(position_x, position_y, 6)
                     units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), False)
+                    self.update_path_for_units(units_with_changed_path)
+
+                if event.key == pylocs.K_h and self.selected_position is not None:
+                    position_x, position_y = self.selected_position
+                    if self.game_map.get_at(position_x, position_y) == 6:
+                        self.game_map.set_at(position_x, position_y, -1)
+                    units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), True)
                     self.update_path_for_units(units_with_changed_path)
 
                 if event.key == pylocs.K_p:

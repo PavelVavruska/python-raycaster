@@ -24,9 +24,10 @@ _logger = logging.getLogger(__name__)
 
 
 class Dijkstra:
-    def __init__(self, world_map, start, end):
+    def __init__(self, world_map, start, end, threshold=0):
         self.open_nodes = dict()
         self.closed_nodes = dict()
+        self.world_map_original = world_map
         self.world_map = []
         self.start_x = 0
         self.start_y = 0
@@ -37,11 +38,14 @@ class Dijkstra:
         self.start_x, self.start_y = start
         self.end_x, self.end_y = end
         _logger.debug('Start: searching for path from ' + str(start) + ' to ' + str(end))
+        self.find_walkable_world_positions(threshold)
+
+    def find_walkable_world_positions(self, threshold):
         # create map
-        self.world_map = [[-2]*len(world_map) for i in range(len(world_map))]
-        for position_y, data_y in enumerate(world_map):
+        self.world_map = [[-2]*len(self.world_map_original) for i in range(len(self.world_map_original))]
+        for position_y, data_y in enumerate(self.world_map_original):
             for position_x, data_x in enumerate(data_y):
-                if data_x <= 0:  # not a wall
+                if data_x <= threshold:  # not a wall
                     self.world_map[position_y][position_x] = 999
 
     def get_shortest_path(self):
@@ -52,7 +56,14 @@ class Dijkstra:
         actual_node = (self.end_y, self.end_x)
         self.shortest_path = [(0, self.end_y, self.end_x)]  # final position
         while (self.start_y, self.start_x) != actual_node:
-            length, pos_y, pos_x = self.closed_nodes[actual_node]
+            try:
+                length, pos_y, pos_x = self.closed_nodes[actual_node]
+            except KeyError:
+                # player closed the path, destroy his towers!
+                self.find_walkable_world_positions(threshold=9)
+                self.start()
+                self.extract_path_from_closed_nodes()
+                return
             actual_node = (pos_y, pos_x)
             self.shortest_path.append((length, pos_y, pos_x))
 
