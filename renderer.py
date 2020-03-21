@@ -103,10 +103,6 @@ class Renderer:
                                          (
                                          screen_x, y + pixel_size),
                                          2)
-                        #for a in range(pixel_size):
-                        #    real_x = screen_x + a
-                        #    if 0 < y < window_height:
-                        #        surface[real_x, y] = result_color_tuple
                     last_pixel_position = current_pixel_position
                 break
 
@@ -118,7 +114,7 @@ class Renderer:
             for entry in reversed(z_buffer_wall):
                 # actual line by line rendering of the visible object
                 object_distance, object_id = entry
-                if object_distance < 0.2:  # skip render distance is too short
+                if object_distance < 0.4:  # skip render distance is too short
                     continue
                 start = int(half_window_height - window_height / (object_distance * 2))
                 wall_vertical_length_full = double_window_height / (object_distance * 2)
