@@ -24,7 +24,7 @@ class Renderer:
                 elif x == 6:
                     color = Constants.COLOR_WHITE
                 else:
-                    color = Constants.COLOR_GREEN
+                    color = Constants.COLOR_BLUE
                 cls.renderer.draw_a_square(
                     surface,
                     offset_x + id_x * mini_map_factor,
@@ -45,6 +45,22 @@ class Renderer:
                     cls.renderer.draw_a_path_cross(surface, x, y, Constants.COLOR_LIGHT_GRAY)
 
             team_color = Constants.COLOR_GREEN if player.ally else Constants.COLOR_RED
+            health = player.health
+            red = max(0, min(255-health, 255))
+            green = min(255, max(0, health*3))
+            health_bar_color = (red, green, 0)
+            pygame.draw.line(
+                surface,
+                health_bar_color,
+                (
+                    player_on_minimap_x,
+                    player_on_minimap_y
+                ),
+                (
+                    player_on_minimap_x + int(player.health/5),
+                    player_on_minimap_y
+                )
+            )
             cls.renderer.draw_a_cross(
                 surface,
                 player_on_minimap_x,
