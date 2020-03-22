@@ -13,11 +13,11 @@ class LineByLine:
 
     @classmethod
     def draw_a_cross(cls, surface, x, y, color):
-        pygame.draw.line(surface, color, (x, y),
-                         (x + Constants.MULTIPLICATOR_MINIMAP, y + Constants.MULTIPLICATOR_MINIMAP), 1)
+        pygame.draw.line(surface, color, (x+5, y+5),
+                         (x + Constants.MULTIPLICATOR_MINIMAP-5, y + Constants.MULTIPLICATOR_MINIMAP-5), 3)
 
-        pygame.draw.line(surface, color, (x, y + Constants.MULTIPLICATOR_MINIMAP),
-                         (x + Constants.MULTIPLICATOR_MINIMAP, y), 1)
+        pygame.draw.line(surface, color, (x+5, y + Constants.MULTIPLICATOR_MINIMAP-5),
+                         (x + Constants.MULTIPLICATOR_MINIMAP-5, y+5), 3)
 
     @classmethod
     def draw_a_path_cross(cls, surface, x, y, color):

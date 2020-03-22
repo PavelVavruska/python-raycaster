@@ -37,6 +37,11 @@ class Player:
         self.path_speed = path_speed if path_speed is not None else 1+random.random()
         self.ally = ally
         self.health = 100
+        self.level = 1
+
+    def reset_player(self, level=1):
+        self.health = 100
+        self.level = level
 
     @property
     def x(self):
@@ -176,4 +181,5 @@ class Player:
         return u'Player: x {0:f}, y {1:f}, < {2:f}'.format(self.x, self.y, self.angle)
 
     def effect_player(self, game_map_effect_data):
-        self.health += game_map_effect_data[int(self.y)][int(self.x)]
+        effect_power = game_map_effect_data[int(self.y)][int(self.x)]
+        self.health += effect_power/self.level

@@ -45,27 +45,41 @@ class Renderer:
                     cls.renderer.draw_a_path_cross(surface, x, y, Constants.COLOR_LIGHT_GRAY)
 
             team_color = Constants.COLOR_GREEN if player.ally else Constants.COLOR_RED
+            cls.renderer.draw_a_cross(
+                surface,
+                player_on_minimap_x,
+                player_on_minimap_y,
+                Constants.COLOR_WHITE if index == player_index else team_color,
+            )
             health = player.health
             red = max(0, min(255-health, 255))
             green = min(255, max(0, health*3))
             health_bar_color = (red, green, 0)
             pygame.draw.line(
                 surface,
-                health_bar_color,
+                Constants.COLOR_BLACK,
                 (
                     player_on_minimap_x,
                     player_on_minimap_y
                 ),
                 (
-                    player_on_minimap_x + int(player.health/5),
+                    player_on_minimap_x + int(Constants.MULTIPLICATOR_MINIMAP),
                     player_on_minimap_y
-                )
+                ), 12
             )
-            cls.renderer.draw_a_cross(
+            pygame.draw.line(
                 surface,
-                player_on_minimap_x,
-                player_on_minimap_y,
-                Constants.COLOR_WHITE if index == player_index else team_color
+                health_bar_color,
+                (
+                    player_on_minimap_x+2, # black border on the left
+                    player_on_minimap_y
+                ),
+                (
+                    player_on_minimap_x + int(
+                        Constants.MULTIPLICATOR_MINIMAP * player.health / 100
+                    )-2, # black border on the right
+                    player_on_minimap_y
+                ), 6
             )
 
         if selected_position:

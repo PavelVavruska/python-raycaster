@@ -240,7 +240,7 @@ class Engine:
                     player = self.players.acquire()
                     if player is None:
                         break
-                    self.update_health_to_max(player)
+                    player.reset_player(self.engine_level)
                     self.update_path_for_unit_from_begin(player)
                     self.round_of_units.append(player)
             if self.health < 1:
@@ -353,8 +353,3 @@ class Engine:
                 new_effect = original_effect + effect
                 if effect <= 0:
                     self.game_map.set_effect_at(x, y, new_effect)
-
-    def update_health_to_max(self, player):
-        player.health = 100*self.engine_level
-
-
