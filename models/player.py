@@ -23,6 +23,7 @@ import random
 
 MAX_VELOCITY_ANGLE = 10
 MAX_VELOCITY_STEP = 2
+EFFECT_MULTIPLIER = 10  # magic number for game balancing
 
 
 class Player:
@@ -181,5 +182,5 @@ class Player:
         return u'Player: x {0:f}, y {1:f}, < {2:f}'.format(self.x, self.y, self.angle)
 
     def effect_player(self, game_map_effect_data):
-        effect_power = game_map_effect_data[int(self.y)][int(self.x)]
+        effect_power = game_map_effect_data[int(self.y)][int(self.x)] * EFFECT_MULTIPLIER
         self.health += effect_power/self.level
