@@ -15,6 +15,15 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * deprecated `L - dynamic lighting on / off`
 * `Mouse click on minimap - execute move to the selected place by using Dijkstra's Shortest Path First algorithm.`
 
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200322_2.png">
+22.03.2020 version (118bc4dbd1432d8a9ff032ca6f0aa815553f4ee1):
+
+
+### Features
+* removed PIL library from dependencies, using pygame image lib instead
+* added scaled images of tarrain to the minimap
+
+
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200322.png">
 22.03.2020 version (58697ea11fde85f633341bb4dff89c6a62e46097):
 
