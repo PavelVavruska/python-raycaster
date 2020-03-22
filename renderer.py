@@ -1,12 +1,10 @@
 from constants import Constants
-from PIL import Image
 from renderers.linebyline import LineByLine
 import pygame
 
 
 class Renderer:
-    texture = Image.open("static/textures.png")
-    pixel_data = texture.load()
+    pixel_data = pygame.image.load("static/textures.png")
     noise_y = 0
     renderer = LineByLine
 
@@ -17,21 +15,13 @@ class Renderer:
         # draw objects
         for id_y, y in enumerate(game_map_data):
             for id_x, x in enumerate(y):
-                if x < 0:
-                    color = Constants.COLOR_GRAY
-                elif x < 6:
-                    color = Constants.COLOR_RED
-                elif x == 6:
-                    color = Constants.COLOR_WHITE
-                else:
-                    color = Constants.COLOR_BLUE
-                cls.renderer.draw_a_square(
-                    surface,
-                    offset_x + id_x * mini_map_factor,
-                    offset_y + id_y * mini_map_factor,
-                    color
+                line = x//8
+                x_row = x % 8
+                surface.blit(
+                    pygame.transform.scale(Renderer.pixel_data, ((256, 64))),
+                    (offset_x + id_x * mini_map_factor, offset_y + id_y * mini_map_factor),
+                    (x_row*32, line*32, 32, 32)
                 )
-
         # draw player
         # player base
         for index, player in enumerate(players):
@@ -116,7 +106,7 @@ class Renderer:
                     if x_cor_texture <= 1:
                         x_cor_texture = 1
 
-                    red, green, blue, alpha = cls.pixel_data[x_cor_texture, y_cor_texture]
+                    red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
                     if dynamic_lighting:
                         distance_dark_blue = int(object_distance * 3)
                         distance_dark = distance_dark_blue * 2
@@ -160,7 +150,7 @@ class Renderer:
                     if x_cor_texture <= 1:
                         x_cor_texture = 1
 
-                    red, green, blue, alpha = cls.pixel_data[x_cor_texture, y_cor_texture]
+                    red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
 
                     current_pixel_position = start + vertical_wall_pixel
                     if green > 0:
