@@ -17,10 +17,13 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200322.png">
 22.03.2020 version (58697ea11fde85f633341bb4dff89c6a62e46097):
- + (huge performace increase) rewritten graphics renderer to use native pygame line/rect interface instead of directly interfacing with canvas on pixel basis
- + tower defense game mechanics
- + spawning creeps with health and level
- + building and destroying towers by selecting empty space/tower and using keys G/H
+
+
+### Features
+* `(huge performace increase) rewritten graphics renderer to use native pygame line/rect interface instead of directly interfacing with canvas on pixel basis`
+* `tower defense game mechanics`
+* `spawning creeps with health and level`
+* `building and destroying towers by selecting empty space/tower and using keys G/H`
 
 
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200313.png">
