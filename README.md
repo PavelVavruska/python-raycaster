@@ -6,14 +6,25 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * Player (coordinates, angle of view)
 
 ## How to play
-
+* `G / H     - after mouse select on minimap build/destroy tower`
 * `W / S     - move forward/backward`
 * `A / D     - turn left/right`
 * `Q / E     - strafe left/right`
-* `UP / DOWN - level of detail`
-* `P - perspective correction on / off`
-* `L - dynamic lighting on / off`
+* deprecated `UP / DOWN - level of detail`
+* deprecated `P - perspective correction on / off`
+* deprecated `L - dynamic lighting on / off`
 * `Mouse click on minimap - execute move to the selected place by using Dijkstra's Shortest Path First algorithm.`
+
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200322.png">
+22.03.2020 version (58697ea11fde85f633341bb4dff89c6a62e46097):
+
+
+### Features
+* `(huge performace increase) rewritten graphics renderer to use native pygame line/rect interface instead of directly interfacing with canvas on pixel basis`
+* `tower defense game mechanics`
+* `spawning creeps with health and level`
+* `building and destroying towers by selecting empty space/tower and using keys G/H`
+
 
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200313.png">
 13.03.2020 version - Added object zbuffer and renderer for transparent items in the map
