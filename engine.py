@@ -44,7 +44,7 @@ class Engine:
     def __init__(self, players, game_map, config):
         # constructor injection
         self.players = players
-        self.round_of_units = []
+        self.round_of_units = {}
         self.player_index = None
         self.game_map = game_map  # type: Map
         self.config = config
@@ -83,12 +83,12 @@ class Engine:
         cor_in_map_y_flat = int(cor_in_map_y)
 
         if mouse_button_left:
-            for player_index, player in enumerate(self.round_of_units):
+            for player_id, player in self.round_of_units.items():
                 if (
                         cor_in_map_x - Constants.MAP_HALF_COORDINATE < player.x < cor_in_map_x + Constants.MAP_HALF_COORDINATE and
                         cor_in_map_y - Constants.MAP_HALF_COORDINATE < player.y < cor_in_map_y + Constants.MAP_HALF_COORDINATE
                 ):
-                    self.player_index = player_index
+                    self.player_index = player_id
                     self.selected_position = None
                     break
             else:
@@ -164,18 +164,18 @@ class Engine:
         if change_to_empty:
             return all_units
         # if changed to wall, recalculate only if the wall is on the path
-        units_to_update = []
-        for unit in all_units:  # type: Player
+        units_to_update = {}
+        for unit_id, unit in all_units.items():  # type: Player
             unit_path = unit.path
             if unit_path is not None:
                 for _, point_position_y, point_position_x in unit_path:
                     if (point_position_x, point_position_y) == changed_map_position:
-                        units_to_update.append(unit)
+                        units_to_update[unit.id] = unit
                         break
         return units_to_update
 
     def update_path_for_units(self, all_units):
-        for unit in all_units:
+        for unit_id, unit in all_units.items():
             self.update_path_for_unit(unit)
 
     def update_path_for_unit_from_begin(self, unit):
@@ -226,7 +226,7 @@ class Engine:
         config_is_perspective_correction_on = self.config.is_perspective_correction_on
         config_dynamic_lighting = self.config.dynamic_lighting
 
-        self.round_of_units = []
+        self.round_of_units = {}
         # pygame static variables
         pygame_surface = self.surface
         while 1:  # game engine ticks
@@ -242,7 +242,7 @@ class Engine:
                         break
                     player.reset_player(self.engine_level)
                     self.update_path_for_unit_from_begin(player)
-                    self.round_of_units.append(player)
+                    self.round_of_units[player.id] = player
             if self.health < 1:
                 # gameover
                 self.health = 100
@@ -254,23 +254,24 @@ class Engine:
             player_path = None
             player_index = self.player_index
 
-            selected_player = self.round_of_units[self.player_index] if self.player_index is not None else None  # type: Player
+            selected_player = self.round_of_units.get(self.player_index) if self.player_index is not None else None  # type: Player
 
             if self.handle_events(selected_player):
                 return
 
-            players_to_delete = []
-            for player in self.round_of_units:
+            players_ids_to_delete = []
+            for player_id, player in self.round_of_units.items():
                 is_dead = player.tick(game_map_data, game_map_effect_data)
                 if (int(player.x), int(player.y)) == self.foes_end:
                     self.health -= 1
                     is_dead = True
                 if is_dead:
+                    if self.player_index == player.id:  # deselect dead player
+                        self.player_index = None
                     self.players.release(player)
-                    players_to_delete.append(player)
-
-            for player in players_to_delete:
-                self.round_of_units.remove(player)
+                    players_ids_to_delete.append(player_id)
+            for player_id in players_ids_to_delete:
+                del self.round_of_units[player_id]
 
             #canvas = pygame.PixelArray(pygame_surface)
             if selected_player:

@@ -27,6 +27,8 @@ EFFECT_MULTIPLIER = 10  # magic number for game balancing
 
 
 class Player:
+    total_number_of_players = 1
+
     def __init__(self, x=2, y=2, angle=90, path_speed=None, ally=False):
         self.__x = x
         self.__y = y
@@ -39,6 +41,8 @@ class Player:
         self.ally = ally
         self.health = 100
         self.level = 1
+        self.id = self.total_number_of_players
+        Player.total_number_of_players += 1
 
     def reset_player(self, level=1):
         self.health = 100

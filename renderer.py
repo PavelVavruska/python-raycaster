@@ -24,7 +24,7 @@ class Renderer:
                 )
         # draw player
         # player base
-        for index, player in enumerate(players):
+        for index, player in players.items():
             player_on_minimap_x = offset_x + int((-Constants.MAP_HALF_COORDINATE + player.x) * mini_map_factor)
             player_on_minimap_y = offset_y + int((-Constants.MAP_HALF_COORDINATE + player.y) * mini_map_factor)
 
@@ -150,6 +150,8 @@ class Renderer:
                     if x_cor_texture <= 1:
                         x_cor_texture = 1
 
+                    x_cor_texture = min(x_cor_texture, 512)
+                    y_cor_texture = min(y_cor_texture, 128)
                     red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
 
                     current_pixel_position = start + vertical_wall_pixel
