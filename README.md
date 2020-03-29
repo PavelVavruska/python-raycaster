@@ -15,6 +15,14 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * deprecated `L - dynamic lighting on / off`
 * `Mouse click on minimap - execute move to the selected place by using Dijkstra's Shortest Path First algorithm.`
 
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200329.png">
+29.03.2020 version (c8df8d6e7a37e62a841591f972fa33e5d198b1f9):
+
+
+### Features
++ POC floor/ceiling
+
+
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200322_2.png">
 22.03.2020 version (118bc4dbd1432d8a9ff032ca6f0aa815553f4ee1):
 
@@ -33,9 +41,6 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * `tower defense game mechanics`
 * `spawning creeps with health and level`
 * `building and destroying towers by selecting empty space/tower and using keys G/H`
-
-<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200329.png">
-29.03.2020 version - Added POC floor/ceiling
 
 
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200313.png">
