@@ -95,7 +95,6 @@ class Engine:
                 self.player_index = None  # no player found at this position
                 self.selected_position = (cor_in_map_x_flat, cor_in_map_y_flat)
 
-
         if mouse_button_right and selected_player is not None:
             if (
                     self.game_map.get_at(cor_in_map_x_flat, cor_in_map_y_flat) == -1 and
@@ -115,7 +114,8 @@ class Engine:
                     position_x, position_y = self.selected_position
                     if self.game_map.get_at(position_x, position_y) <= 0:
                         self.game_map.set_at(position_x, position_y, 6)
-                    units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), False)
+                    units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units,
+                                                                                    (position_x, position_y), False)
                     self.update_path_for_units(units_with_changed_path)
                     self.update_effects_on_map(self.selected_position, deleted=False)
 
@@ -123,7 +123,8 @@ class Engine:
                     position_x, position_y = self.selected_position
                     if self.game_map.get_at(position_x, position_y) == 6:
                         self.game_map.set_at(position_x, position_y, -1)
-                    units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units, (position_x, position_y), True)
+                    units_with_changed_path = self.get_all_units_affected_by_change(self.round_of_units,
+                                                                                    (position_x, position_y), True)
                     self.update_path_for_units(units_with_changed_path)
                     self.update_effects_on_map(self.selected_position, deleted=True)
 
@@ -144,12 +145,16 @@ class Engine:
 
                 if selected_player is not None:
                     if event.key == pylocs.K_w:
-                        selected_player.set_velocity_x(selected_player.velocity_x + math.cos(math.radians(selected_player.angle)) / 5)
-                        selected_player.set_velocity_y(selected_player.velocity_y + math.sin(math.radians(selected_player.angle)) / 5)
+                        selected_player.set_velocity_x(
+                            selected_player.velocity_x + math.cos(math.radians(selected_player.angle)) / 5)
+                        selected_player.set_velocity_y(
+                            selected_player.velocity_y + math.sin(math.radians(selected_player.angle)) / 5)
 
                     if event.key == pylocs.K_s:
-                        selected_player.set_velocity_x(selected_player.velocity_x - math.cos(math.radians(selected_player.angle)) / 5)
-                        selected_player.set_velocity_y(selected_player.velocity_y - math.sin(math.radians(selected_player.angle)) / 5)
+                        selected_player.set_velocity_x(
+                            selected_player.velocity_x - math.cos(math.radians(selected_player.angle)) / 5)
+                        selected_player.set_velocity_y(
+                            selected_player.velocity_y - math.sin(math.radians(selected_player.angle)) / 5)
 
                     if event.key == pylocs.K_d:
                         selected_player.set_velocity_angle(selected_player.velocity_angle + 5)
@@ -189,9 +194,9 @@ class Engine:
             unit.path.clear()
 
         if start_coordinates is None:
-            start_coordinates=(int(unit.x), int(unit.y))
+            start_coordinates = (int(unit.x), int(unit.y))
         if end_coordinates is None:
-            end_coordinates=self.foes_end
+            end_coordinates = self.foes_end
 
         dijkstra = Dijkstra(
             self.game_map.data,
@@ -207,7 +212,6 @@ class Engine:
             traceback.print_exc(file=sys.stdout)
         except IndexError:
             traceback.print_exc(file=sys.stdout)
-
 
     def activate(self):
         # during game static variables
@@ -230,7 +234,7 @@ class Engine:
         # pygame static variables
         pygame_surface = self.surface
         while 1:  # game engine ticks
-            self.engine_tick+=1
+            self.engine_tick += 1
 
             if self.engine_tick > 100:
                 self.engine_level += 1
@@ -254,7 +258,8 @@ class Engine:
             player_path = None
             player_index = self.player_index
 
-            selected_player = self.round_of_units.get(self.player_index) if self.player_index is not None else None  # type: Player
+            selected_player = self.round_of_units.get(
+                self.player_index) if self.player_index is not None else None  # type: Player
 
             if self.handle_events(selected_player):
                 return
@@ -273,13 +278,12 @@ class Engine:
             for player_id in players_ids_to_delete:
                 del self.round_of_units[player_id]
 
-            #canvas = pygame.PixelArray(pygame_surface)
             if selected_player:
                 player_angle = selected_player.angle
                 player_pos_x = selected_player.x
                 player_pos_y = selected_player.y
 
-                x_cor_ordered_z_buffer_walls, x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
+                x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
                     player_angle=player_angle,
                     player_pos_x=player_pos_x,
                     player_pos_y=player_pos_y,
@@ -290,13 +294,6 @@ class Engine:
                     game_map_size_x=game_map_size_x,
                     game_map_size_y=game_map_size_y,
                     game_map=game_map_data
-                )
-                Renderer.draw_from_z_buffer_walls(
-                    surface=pygame_surface,
-                    dynamic_lighting=config_dynamic_lighting,
-                    pixel_size=config_pixel_size,
-                    window_height=window_height / 3,
-                    x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_walls
                 )
                 Renderer.draw_from_z_buffer_objects(
                     surface=pygame_surface,
@@ -340,7 +337,7 @@ class Engine:
             health_list.append('Tick: ')
             health_list.append(str(self.engine_tick))
             health = self.font.render(' '.join(health_list), True, pygame.Color('white'))
-            screen.blit(fps, (0, window_height/3))
+            screen.blit(fps, (0, window_height / 3))
             screen.blit(health, (0, window_height / 3 + 40))
             pygame.display.flip()
             pygame_surface.fill((0, 0, 0))
@@ -348,9 +345,9 @@ class Engine:
     def update_effects_on_map(self, position, deleted=False):
         pos_x, pos_y = position
         effect = 1 if deleted else -1
-        for y in range(pos_y-1, pos_y+1):
+        for y in range(pos_y - 1, pos_y + 1):
             for x in range(pos_x - 1, pos_x + 1):
-                original_effect = self.game_map.get_effect_at(x,y)
+                original_effect = self.game_map.get_effect_at(x, y)
                 new_effect = original_effect + effect
                 if effect <= 0:
                     self.game_map.set_effect_at(x, y, new_effect)

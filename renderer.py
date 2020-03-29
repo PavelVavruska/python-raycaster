@@ -80,52 +80,6 @@ class Renderer:
                 Constants.COLOR_BLUE
             )
 
-
-
-    @classmethod
-    def draw_from_z_buffer_walls(cls, surface, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
-        half_window_height = window_height / 2
-        double_window_height = window_height * 2
-        for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
-            for entry in z_buffer_wall:
-                # actual line by line rendering of the visible object
-                object_distance, object_id = entry
-                if object_distance < 0.2:  # skip render distance is too short
-                    continue
-                start = int(half_window_height - window_height / (object_distance * 2))
-                wall_vertical_length_full = double_window_height / (object_distance * 2)
-
-                size_of_texture_pixel = int(wall_vertical_length_full / 64)
-                one_artificial_pixel_size = size_of_texture_pixel if size_of_texture_pixel > 0 else 1
-
-                last_pixel_position = None
-                for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
-                    y_cor_texture = int(64 + 64 / wall_vertical_length_full * vertical_wall_pixel)
-                    x_cor_texture = int(object_id * 64)
-
-                    if x_cor_texture <= 1:
-                        x_cor_texture = 1
-
-                    red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
-                    if dynamic_lighting:
-                        distance_dark_blue = int(object_distance * 3)
-                        distance_dark = distance_dark_blue * 2
-                        red -= distance_dark if red > distance_dark else red
-                        green -= distance_dark if green > distance_dark else green
-                        blue -= distance_dark_blue if blue > distance_dark_blue else blue
-
-                    result_color_tuple = (red, green, blue)
-
-                    current_pixel_position = start + vertical_wall_pixel
-                    for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1),
-                                   int(current_pixel_position)):
-                        pygame.draw.line(surface, result_color_tuple, (screen_x, y),
-                                         (
-                                         screen_x, y + pixel_size),
-                                         2)
-                    last_pixel_position = current_pixel_position
-                break
-
     @classmethod
     def draw_from_z_buffer_objects(cls, surface, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
         half_window_height = window_height / 2
@@ -133,8 +87,10 @@ class Renderer:
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
             for entry in reversed(z_buffer_wall):
                 # actual line by line rendering of the visible object
-                object_distance, object_id = entry
-                if object_distance < 0.5:  # skip render distance is too short
+                object_distance, object_id, object_type = entry
+                if object_distance < 0.5 and object_type != 2:  # skip render distance is too short for objects
+                    continue
+                elif object_distance < 0.2:  # skip render distance is too short for walls
                     continue
                 start = int(half_window_height - window_height / (object_distance * 2))
                 wall_vertical_length_full = double_window_height / (object_distance * 2)
@@ -143,36 +99,49 @@ class Renderer:
                 one_artificial_pixel_size = size_of_texture_pixel if size_of_texture_pixel > 0 else 1
 
                 last_pixel_position = None
-                for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
-                    y_cor_texture = int(64 / wall_vertical_length_full * vertical_wall_pixel)
-                    x_cor_texture = int(object_id * 64)
+                if object_type != 3:  # for walls and objects
+                    for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
+                        y_cor_texture = int(64 / wall_vertical_length_full * vertical_wall_pixel)
+                        if object_type == 2:
+                            y_cor_texture += 64
+                        x_cor_texture = int(object_id * 64)
 
-                    if x_cor_texture <= 1:
-                        x_cor_texture = 1
+                        if x_cor_texture <= 1:
+                            x_cor_texture = 1
 
-                    x_cor_texture = min(x_cor_texture, 512)
-                    y_cor_texture = min(y_cor_texture, 128)
-                    red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
+                        x_cor_texture = max(0, min(x_cor_texture, 511))
+                        y_cor_texture = max(0, min(y_cor_texture, 127))
+                        red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
 
-                    current_pixel_position = start + vertical_wall_pixel
-                    if green > 0:
+                        current_pixel_position = start + vertical_wall_pixel
+                        if green > 0:
 
-                        if dynamic_lighting:
-                            distance_dark_blue = int(object_distance * 3)
-                            distance_dark = distance_dark_blue * 2
-                            red -= distance_dark if red > distance_dark else red
-                            green -= distance_dark if green > distance_dark else green
-                            blue -= distance_dark_blue if blue > distance_dark_blue else blue
+                            if dynamic_lighting:
+                                distance_dark_blue = int(object_distance * 3)
+                                distance_dark = distance_dark_blue * 2
+                                red -= distance_dark if red > distance_dark else red
+                                green -= distance_dark if green > distance_dark else green
+                                blue -= distance_dark_blue if blue > distance_dark_blue else blue
 
-                        result_color_tuple = (red, green, blue)
+                            result_color_tuple = (red, green, blue)
 
-                        for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1),
-                                       int(current_pixel_position)):
-                            pygame.draw.line(surface, result_color_tuple, (screen_x, y),
-                                             (
-                                                 screen_x, y + pixel_size),
-                                             2)
-                    last_pixel_position = current_pixel_position
+                            for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1),
+                                           int(current_pixel_position)):
+                                pygame.draw.line(surface, result_color_tuple, (screen_x, y),
+                                                 (
+                                                     screen_x, y + pixel_size),
+                                                 2)
+                        last_pixel_position = current_pixel_position
+                else:
+                    # POC drawing of floor and ceiling
+                    pygame.draw.line(surface, (0, 255, 0), (screen_x, start),
+                                     (
+                                         screen_x, start + pixel_size),
+                                     2)
+                    pygame.draw.line(surface, (0, 255, 0), (screen_x, start + wall_vertical_length_full),
+                                     (
+                                         screen_x, start + wall_vertical_length_full + pixel_size),
+                                     2)
 
     @classmethod
     def draw_disabled_screen(cls, surface, pixel_size, window_width, window_height):
