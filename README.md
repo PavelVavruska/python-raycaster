@@ -34,6 +34,9 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * `spawning creeps with health and level`
 * `building and destroying towers by selecting empty space/tower and using keys G/H`
 
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200329.png">
+29.03.2020 version - Added POC floor/ceiling
+
 
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200313.png">
 13.03.2020 version - Added object zbuffer and renderer for transparent items in the map
