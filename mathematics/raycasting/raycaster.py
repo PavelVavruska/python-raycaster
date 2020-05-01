@@ -153,7 +153,7 @@ class Raycaster:
                 )
                 if detected:
                     object_type, ray_distance_from_player, object_on_the_map_type_id_with_offset = detected
-                    z_buffer_objects.append((ray_distance_from_player, object_on_the_map_type_id_with_offset, object_type))
+                    z_buffer_objects.append((ray_distance_from_player, object_on_the_map_type_id_with_offset, object_type, ray_angle))
                     if object_type == 2:  # is wall
                         break  # cannot see behind the first wall
 

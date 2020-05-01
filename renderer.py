@@ -1,3 +1,5 @@
+import math
+
 from constants import Constants
 from renderers.linebyline import LineByLine
 import pygame
@@ -81,17 +83,17 @@ class Renderer:
             )
 
     @classmethod
-    def draw_from_z_buffer_objects(cls, surface, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
+    def draw_from_z_buffer_objects(cls, player_angle, surface, dynamic_lighting, pixel_size, window_height, x_cor_ordered_z_buffer_data):
         half_window_height = window_height / 2
         double_window_height = window_height * 2
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
+            last_floor_position = None
+            last_ceiling_position = None
             for entry in reversed(z_buffer_wall):
                 # actual line by line rendering of the visible object
-                object_distance, object_id, object_type = entry
-                if object_distance < 0.5 and object_type != 2:  # skip render distance is too short for objects
-                    continue
-                elif object_distance < 0.2:  # skip render distance is too short for walls
-                    continue
+                object_distance, object_id, object_type, ray_angle = entry
+                if object_distance < 0.01:
+                    object_distance = 0.01
                 start = int(half_window_height - window_height / (object_distance * 2))
                 wall_vertical_length_full = double_window_height / (object_distance * 2)
 
@@ -99,7 +101,7 @@ class Renderer:
                 one_artificial_pixel_size = size_of_texture_pixel if size_of_texture_pixel > 0 else 1
 
                 last_pixel_position = None
-                if object_type != 3:  # for walls and objects
+                if object_type != 3:  # for walls and objects  # and object_distance > 0.4
                     for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
                         y_cor_texture = int(64 / wall_vertical_length_full * vertical_wall_pixel)
                         if object_type == 2:
@@ -127,6 +129,8 @@ class Renderer:
 
                             for y in range(int(last_pixel_position if last_pixel_position else current_pixel_position + 1),
                                            int(current_pixel_position)):
+                                if y < 0 or y > window_height:
+                                    continue
                                 pygame.draw.line(surface, result_color_tuple, (screen_x, y),
                                                  (
                                                      screen_x, y + pixel_size),
@@ -157,5 +161,3 @@ class Renderer:
                 255-y*25,
                 0
             ), (0, position_of_scanning_line_y - y), (window_width, position_of_scanning_line_y - y), 1)
-
-

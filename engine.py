@@ -51,7 +51,7 @@ class Engine:
 
         # game stats
         self.health = 100
-        self.engine_tick = 1
+        self.engine_tick = 99
         self.engine_level = 1
 
         # map
@@ -296,10 +296,11 @@ class Engine:
                     game_map=game_map_data
                 )
                 Renderer.draw_from_z_buffer_objects(
+                    player_angle=player_angle,
                     surface=pygame_surface,
                     dynamic_lighting=config_dynamic_lighting,
                     pixel_size=config_pixel_size,
-                    window_height=window_height / 3,
+                    window_height=int(window_height / 3),
                     x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
                 )
             else:
