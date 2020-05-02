@@ -6,6 +6,11 @@ for ray_angle in range(3600):
 
 tan_from_degrees_10 = tuple(tan_from_degrees_10)
 
+cos_from_degrees = []
+for ray_angle in range(3600):
+    cos_from_degrees.append(math.cos(math.radians(ray_angle/10)))
+
+cos_from_degrees = tuple(cos_from_degrees)
 
 
 class Raycaster:
@@ -28,8 +33,8 @@ class Raycaster:
                 0 <= ray_position_for_map_collision_y < game_map_size_y):
 
             object_on_the_map_type_id = game_map[
-                int(ray_position_for_map_collision_y)][
-                int(ray_position_for_map_collision_x)
+                ray_position_for_map_collision_y][
+                ray_position_for_map_collision_x
             ]
             ray_position_offset_from_the_object_edge = (
                     (ray_position_x - ray_position_for_map_collision_x)
@@ -38,12 +43,9 @@ class Raycaster:
 
             object_on_the_map_type_id_with_offset = object_on_the_map_type_id + ray_position_offset_from_the_object_edge
 
-            ray_distance_from_player_x = player_pos_x - ray_position_x
-            ray_distance_from_player_y = player_pos_y - ray_position_y
-            ray_distance_from_player = math.sqrt(
-                math.pow(ray_distance_from_player_x, 2) + math.pow(ray_distance_from_player_y, 2)
-            )
-            if object_on_the_map_type_id < 0: # floor/ceiling
+            ray_distance_from_player = math.hypot(player_pos_x - ray_position_x, player_pos_y - ray_position_y)
+
+            if object_on_the_map_type_id < 0:  # floor/ceiling
                 object_type = 3
             elif 0 <= object_on_the_map_type_id < 10:
                 object_type = 1 # object
@@ -51,10 +53,10 @@ class Raycaster:
                 object_type = 2 # wall
 
             if config_is_perspective_correction_on:
-                ray_perspective_correction_angle = abs(ray_angle/10) - abs(player_angle)
-                ray_distance_from_player_with_perspective_correction = math.cos(
-                    math.radians(ray_perspective_correction_angle)
-                ) * ray_distance_from_player
+                ray_perspective_correction_angle = ray_angle - player_angle*10
+                ray_distance_from_player_with_perspective_correction = cos_from_degrees[
+                    ray_perspective_correction_angle
+                ] * ray_distance_from_player
                 return (
                     object_type,
                     ray_distance_from_player_with_perspective_correction,
@@ -137,7 +139,6 @@ class Raycaster:
                                         mini_map_offset_x, game_map_size_x, game_map_size_y, game_map):
         # player_angle = self.player.angle
         player_angle_start = player_angle - config_fov / 2
-        x_cor_z_buffer_walls = []
         x_cor_z_buffer_objects = []
         for screen_x in range(0, int(mini_map_offset_x), config_pixel_size):
             ray_angle = int((player_angle_start + config_fov / mini_map_offset_x * screen_x)*10)
