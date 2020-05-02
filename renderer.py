@@ -101,6 +101,37 @@ class Renderer:
                 one_artificial_pixel_size = size_of_texture_pixel if size_of_texture_pixel > 0 else 1
 
                 last_pixel_position = None
+
+                if object_type != 2:  # skip only for walls
+                    # draw ceiling and floor
+                    if last_ceiling_position == None:
+                        last_ceiling_position = 0
+
+                    if last_floor_position == None:
+                        last_floor_position = window_height
+
+                    y_ceiling_start = max(0, start)
+                    y_ceiling_end = min(250, last_ceiling_position)
+                    color = max(0, min(255, int(255 - abs(object_distance * 30))))
+                    for position_move in range(y_ceiling_start, y_ceiling_end, pixel_size):
+
+
+                        red, green, blue, alpha = color, color, color, color
+                        # POC drawing of floor and ceiling
+                        pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
+                                         (
+                                             screen_x, position_move + pixel_size),
+                                         2)
+
+                    # FLOOR
+                    for position_move in range(max(half_window_height, last_floor_position), min(window_height, int(start + wall_vertical_length_full)), pixel_size):
+                        red, green, blue, alpha = 0, color, 0, 0
+                        # POC drawing of floor and ceiling
+                        pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
+                                         (
+                                             screen_x, position_move + pixel_size),
+                                         2)
+
                 if object_type != 3:  # for walls and objects  # and object_distance > 0.4
                     for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
                         y_cor_texture = int(64 / wall_vertical_length_full * vertical_wall_pixel)
@@ -136,16 +167,9 @@ class Renderer:
                                                      screen_x, y + pixel_size),
                                                  2)
                         last_pixel_position = current_pixel_position
-                else:
-                    # POC drawing of floor and ceiling
-                    pygame.draw.line(surface, (0, 255, 0), (screen_x, start),
-                                     (
-                                         screen_x, start + pixel_size),
-                                     2)
-                    pygame.draw.line(surface, (0, 255, 0), (screen_x, start + wall_vertical_length_full),
-                                     (
-                                         screen_x, start + wall_vertical_length_full + pixel_size),
-                                     2)
+
+                last_ceiling_position = start
+                last_floor_position = int(start + wall_vertical_length_full)
 
     @classmethod
     def draw_disabled_screen(cls, surface, pixel_size, window_width, window_height):
