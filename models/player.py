@@ -35,7 +35,6 @@ class Player:
         self.__angle = angle
         self.__velocity_x = 0
         self.__velocity_y = 0
-        self.__velocity_angle = 0
         self.path = None
         self.path_speed = path_speed if path_speed is not None else 1+random.random()
         self.ally = ally
@@ -68,10 +67,6 @@ class Player:
     def velocity_y(self):
         return self.__velocity_y
 
-    @property
-    def velocity_angle(self):
-        return self.__velocity_angle
-
     def set_x(self, x):
         self.__x = x
 
@@ -95,10 +90,6 @@ class Player:
 
     def process_view_angle(self):
         angle = self.angle
-        velocity_angle = self.velocity_angle
-        self.set_angle(angle + velocity_angle)
-        self.set_velocity_angle(velocity_angle*0.2)
-
         if angle < 0 or angle >= 360:
             self.set_angle(angle % 360)
 
