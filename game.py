@@ -9,10 +9,10 @@ def main():
     players = ReusablePool(50, Player)
 
     config = Config(
-        fov=100,
+        fov=80,
         is_perspective_correction_on=True,
         is_metric_on=True,
-        pixel_size=2,
+        pixel_size=3,
         dynamic_lighting=False,
         texture_filtering=True
     )

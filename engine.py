@@ -300,7 +300,7 @@ class Engine:
                     surface=pygame_surface,
                     dynamic_lighting=config_dynamic_lighting,
                     pixel_size=config_pixel_size,
-                    window_height=int(window_height / 3),
+                    window_height=int(window_height),
                     x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
                 )
             else:
@@ -308,7 +308,7 @@ class Engine:
                     surface=pygame_surface,
                     pixel_size=config_pixel_size,
                     window_width=int(mini_map_offset_x),
-                    window_height=int(window_height / 3)
+                    window_height=int(window_height)
                 )
             Renderer.draw_minimap(
                 surface=pygame_surface,
@@ -338,8 +338,8 @@ class Engine:
             health_list.append('Tick: ')
             health_list.append(str(self.engine_tick))
             health = self.font.render(' '.join(health_list), True, pygame.Color('white'))
-            screen.blit(fps, (0, window_height / 3))
-            screen.blit(health, (0, window_height / 3 + 40))
+            screen.blit(fps, (0, window_height - 50))
+            screen.blit(health, (0, window_height - 25))
             pygame.display.flip()
             pygame_surface.fill((0, 0, 0))
 

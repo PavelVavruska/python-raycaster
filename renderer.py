@@ -121,7 +121,7 @@ class Renderer:
 
 
                     y_ceiling_start = max(0, start)
-                    y_ceiling_end = min(250, last_ceiling_position)
+                    y_ceiling_end = min(half_window_height, last_ceiling_position)
                     ceiling_pos_delta = y_ceiling_end - y_ceiling_start
                     color = max(0, min(255, int(255 - abs(object_distance * 30))))
                     x = 0
@@ -142,7 +142,7 @@ class Renderer:
                         pygame.draw.line(surface, (0, 0, blue), (screen_x, position_move),
                                          (
                                              screen_x, position_move + pixel_size),
-                                         2)
+                                         pixel_size)
 
                     # FLOOR
                     tile_pos_start = max(half_window_height, last_floor_position)
@@ -167,7 +167,7 @@ class Renderer:
                         pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
                                          (
                                              screen_x, position_move + pixel_size),
-                                         2)
+                                         pixel_size)
 
                 if object_type != 3:  # for walls and objects  # and object_distance > 0.4
                     object_id_with_offset = object_id + offset_x + offset_y
@@ -203,7 +203,7 @@ class Renderer:
                                 pygame.draw.line(surface, result_color_tuple, (screen_x, y),
                                                  (
                                                      screen_x, y + pixel_size),
-                                                 2)
+                                                 pixel_size)
                         last_pixel_position = current_pixel_position
 
                 last_ceiling_position = start
