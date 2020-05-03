@@ -112,37 +112,45 @@ class Renderer:
                 if last_floor_position == None:
                     last_floor_position = window_height
 
-                texture_start_x = 128 + abs(ray_x * 16 % 64)  # TODO
-                texture_start_y = 64 + abs(ray_y * 16 % 64)
+                texture_start_x = ray_x * 48 % 64  # TODO
+                texture_start_y = ray_y * 48 % 64
                 texture_start_x_delta = texture_start_x - last_offset_x
                 texture_start_y_delta = texture_start_y - last_offset_y
-
-                tile_pos_start = max(half_window_height, last_floor_position)
-                tile_pos_end = min(window_height, int(start + wall_vertical_length_full))
-                tile_pos_delta = tile_pos_end - tile_pos_start
-
-
                 if object_type != 2:  # skip only for walls
                     # draw ceiling and floor
 
 
                     y_ceiling_start = max(0, start)
                     y_ceiling_end = min(250, last_ceiling_position)
+                    ceiling_pos_delta = y_ceiling_end - y_ceiling_start
                     color = max(0, min(255, int(255 - abs(object_distance * 30))))
+                    x = 0
                     for position_move in range(y_ceiling_start, y_ceiling_end, pixel_size):
+                        x_cor_texture = last_offset_x + texture_start_x_delta / ceiling_pos_delta * x * pixel_size
+                        y_cor_texture = last_offset_y + texture_start_y_delta / ceiling_pos_delta * x * pixel_size
+                        x += 1
+                        if x_cor_texture <= 1:
+                            x_cor_texture = 1
 
-                        red, green, blue, alpha = color, color, color, color
-                        # POC drawing of floor and ceiling
-                        pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
+                        if y_cor_texture <= 1:
+                            y_cor_texture = 1
+
+                        x_cor_texture = max(0, min(x_cor_texture, 511))
+                        y_cor_texture = max(0, min(y_cor_texture, 127))
+                        red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
+
+                        pygame.draw.line(surface, (0, 0, blue), (screen_x, position_move),
                                          (
                                              screen_x, position_move + pixel_size),
                                          2)
 
                     # FLOOR
+                    tile_pos_start = max(half_window_height, last_floor_position)
+                    tile_pos_end = min(window_height, int(start + wall_vertical_length_full))
+                    tile_pos_delta = tile_pos_end - tile_pos_start
 
                     x = 0
                     for position_move in range(tile_pos_start, tile_pos_end, pixel_size):
-
                         x_cor_texture = last_offset_x + texture_start_x_delta / tile_pos_delta * x * pixel_size
                         y_cor_texture = last_offset_y + texture_start_y_delta / tile_pos_delta * x * pixel_size
                         x += 1
@@ -156,8 +164,6 @@ class Renderer:
                         y_cor_texture = max(0, min(y_cor_texture, 127))
                         red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
 
-                        #red, green, blue, alpha = 0, color, 0, 0
-                        # POC drawing of floor and ceiling
                         pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
                                          (
                                              screen_x, position_move + pixel_size),
