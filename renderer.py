@@ -7,6 +7,7 @@ import pygame
 
 class Renderer:
     pixel_data = pygame.image.load("static/textures.png")
+    grass_pixel_data = pygame.image.load("static/grass.png")
     noise_y = 0
     renderer = LineByLine
 
@@ -89,9 +90,12 @@ class Renderer:
         for screen_x, z_buffer_wall in x_cor_ordered_z_buffer_data:
             last_floor_position = None
             last_ceiling_position = None
+            last_offset_x = 0
+            last_offset_y = 0
             for entry in reversed(z_buffer_wall):
+
                 # actual line by line rendering of the visible object
-                object_distance, object_id, object_type, ray_angle = entry
+                object_distance, object_id, offset_x, offset_y, ray_x, ray_y, object_type, ray_angle = entry
                 if object_distance < 0.01:
                     object_distance = 0.01
                 start = int(half_window_height - window_height / (object_distance * 2))
@@ -102,19 +106,30 @@ class Renderer:
 
                 last_pixel_position = None
 
+                if last_ceiling_position == None:
+                    last_ceiling_position = 0
+
+                if last_floor_position == None:
+                    last_floor_position = window_height
+
+                texture_start_x = 128 + abs(ray_x * 16 % 64)  # TODO
+                texture_start_y = 64 + abs(ray_y * 16 % 64)
+                texture_start_x_delta = texture_start_x - last_offset_x
+                texture_start_y_delta = texture_start_y - last_offset_y
+
+                tile_pos_start = max(half_window_height, last_floor_position)
+                tile_pos_end = min(window_height, int(start + wall_vertical_length_full))
+                tile_pos_delta = tile_pos_end - tile_pos_start
+
+
                 if object_type != 2:  # skip only for walls
                     # draw ceiling and floor
-                    if last_ceiling_position == None:
-                        last_ceiling_position = 0
 
-                    if last_floor_position == None:
-                        last_floor_position = window_height
 
                     y_ceiling_start = max(0, start)
                     y_ceiling_end = min(250, last_ceiling_position)
                     color = max(0, min(255, int(255 - abs(object_distance * 30))))
                     for position_move in range(y_ceiling_start, y_ceiling_end, pixel_size):
-
 
                         red, green, blue, alpha = color, color, color, color
                         # POC drawing of floor and ceiling
@@ -124,8 +139,24 @@ class Renderer:
                                          2)
 
                     # FLOOR
-                    for position_move in range(max(half_window_height, last_floor_position), min(window_height, int(start + wall_vertical_length_full)), pixel_size):
-                        red, green, blue, alpha = 0, color, 0, 0
+
+                    x = 0
+                    for position_move in range(tile_pos_start, tile_pos_end, pixel_size):
+
+                        x_cor_texture = last_offset_x + texture_start_x_delta / tile_pos_delta * x * pixel_size
+                        y_cor_texture = last_offset_y + texture_start_y_delta / tile_pos_delta * x * pixel_size
+                        x += 1
+                        if x_cor_texture <= 1:
+                            x_cor_texture = 1
+
+                        if y_cor_texture <= 1:
+                            y_cor_texture = 1
+
+                        x_cor_texture = max(0, min(x_cor_texture, 511))
+                        y_cor_texture = max(0, min(y_cor_texture, 127))
+                        red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
+
+                        #red, green, blue, alpha = 0, color, 0, 0
                         # POC drawing of floor and ceiling
                         pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
                                          (
@@ -133,11 +164,12 @@ class Renderer:
                                          2)
 
                 if object_type != 3:  # for walls and objects  # and object_distance > 0.4
+                    object_id_with_offset = object_id + offset_x + offset_y
                     for vertical_wall_pixel in range(0, int(wall_vertical_length_full), one_artificial_pixel_size):
                         y_cor_texture = int(64 / wall_vertical_length_full * vertical_wall_pixel)
                         if object_type == 2:
                             y_cor_texture += 64
-                        x_cor_texture = int(object_id * 64)
+                        x_cor_texture = int(object_id_with_offset * 64)
 
                         if x_cor_texture <= 1:
                             x_cor_texture = 1
@@ -170,6 +202,8 @@ class Renderer:
 
                 last_ceiling_position = start
                 last_floor_position = int(start + wall_vertical_length_full)
+                last_offset_x, last_offset_y = texture_start_x, texture_start_y
+
 
     @classmethod
     def draw_disabled_screen(cls, surface, pixel_size, window_width, window_height):

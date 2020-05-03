@@ -29,7 +29,7 @@ class Raycaster:
                     + (ray_position_y - ray_position_for_map_collision_y)
             )
 
-            object_on_the_map_type_id_with_offset = object_on_the_map_type_id + ray_position_offset_from_the_object_edge
+            # object_on_the_map_type_id_with_offset = object_on_the_map_type_id + ray_position_offset_from_the_object_edge
 
             ray_distance_from_player = math.hypot(player_pos_x - ray_position_x, player_pos_y - ray_position_y)
 
@@ -48,13 +48,21 @@ class Raycaster:
                 return (
                     object_type,
                     ray_distance_from_player_with_perspective_correction,
-                    object_on_the_map_type_id_with_offset % 10
+                    object_on_the_map_type_id % 10,  # 0 - 9 objects, 10+ walls
+                    ray_position_x - ray_position_for_map_collision_x,
+                    ray_position_y - ray_position_for_map_collision_y,
+                    ray_position_x,
+                    ray_position_y,
                 )
             else:
                 return (
                     object_type,
                     ray_distance_from_player,
-                    object_on_the_map_type_id_with_offset % 10
+                    object_on_the_map_type_id % 10,  # 0 - 9 objects, 10+ walls
+                    ray_position_x - ray_position_for_map_collision_x,
+                    ray_position_y - ray_position_for_map_collision_y,
+                    ray_position_x,
+                    ray_position_y,
                 )
 
     @classmethod
@@ -149,8 +157,15 @@ class Raycaster:
                     config_is_perspective_correction_on
                 )
                 if detected:
-                    object_type, ray_distance_from_player, object_on_the_map_type_id_with_offset = detected
-                    z_buffer_objects.append((ray_distance_from_player, object_on_the_map_type_id_with_offset, object_type, ray_angle))
+                    object_type, ray_distance_from_player, object_on_the_map_type_id, offset_x, offset_y, ray_x, ray_y = detected
+                    z_buffer_objects.append((ray_distance_from_player,
+                                             object_on_the_map_type_id,
+                                             offset_x,
+                                             offset_y,
+                                             ray_x,
+                                             ray_y,
+                                             object_type,
+                                             ray_angle))
                     if object_type == 2:  # is wall
                         break  # cannot see behind the first wall
 
