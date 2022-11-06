@@ -1,9 +1,11 @@
 import math
-from mathematics.raycasting.rustlib import move_ray_rust
+#from mathematics.raycasting.rustlib import move_ray_rust
 
 
 class Raycaster:
+    pass
 
+"""
     @classmethod
     def calculate_collision_to_z_buffer(cls, ray_angle, ray_position_x, ray_position_y,
                                         game_map, game_map_size_x, game_map_size_y,
@@ -177,3 +179,4 @@ class Raycaster:
 
             x_cor_z_buffer_objects.append((screen_x, z_buffer_objects))
         return x_cor_z_buffer_objects
+"""

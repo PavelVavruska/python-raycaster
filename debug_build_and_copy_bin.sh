@@ -1,4 +1,4 @@
 cd pyext-rustlib/
-cargo build --release
+cargo build
 cd ..
 cp pyext-rustlib/target/release/librustlib.so rustlib.so

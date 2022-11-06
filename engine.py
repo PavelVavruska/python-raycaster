@@ -31,6 +31,9 @@ from constants import Constants
 from renderer import Renderer
 from mathematics.raycasting.raycaster import Raycaster
 
+
+from rustlib import get_x_cor_ordered_z_buffer_data_rust
+
 if TYPE_CHECKING:
     from models.player import Player
     from models.map import Map
@@ -283,7 +286,7 @@ class Engine:
                 player_pos_x = selected_player.x
                 player_pos_y = selected_player.y
 
-                x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
+                x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                     player_angle=player_angle,
                     player_pos_x=player_pos_x,
                     player_pos_y=player_pos_y,
