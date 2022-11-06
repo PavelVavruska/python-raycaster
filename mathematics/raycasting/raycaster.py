@@ -1,4 +1,5 @@
 import math
+from mathematics.raycasting.rustlib import move_ray_rust
 
 
 class Raycaster:
@@ -66,7 +67,7 @@ class Raycaster:
                 )
 
     @classmethod
-    def move_ray(cls, ray_angle, ray_position_x, ray_position_y):
+    def move_ray(cls, ray_angle, ray_position_x, ray_position_y):  # MOVED TO RUST        
         # QUADRANTS:
         # 1
         # 0 - 90
@@ -169,9 +170,10 @@ class Raycaster:
                     if object_type == 2:  # is wall
                         break  # cannot see behind the first wall
 
-                ray_position_x, ray_position_y = cls.move_ray(
-                    ray_angle, ray_position_x, ray_position_y
-                )
+                obj = move_ray_rust(ray_angle, ray_position_x, ray_position_y)
+                ray_position_x, ray_position_y = obj[0], obj[1]
+                
+
 
             x_cor_z_buffer_objects.append((screen_x, z_buffer_objects))
         return x_cor_z_buffer_objects

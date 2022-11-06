@@ -1,0 +1,15 @@
+[package]
+name = "pyext-rustlib"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pavel Vavruska <vavruska.pavel@gmail.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "rustlib"
+crate-type = ["dylib"]
+
+[dependencies.cpython]
+version = "0.7"
+features = ["extension-module"]
