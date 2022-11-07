@@ -64,11 +64,11 @@ fn calculate_collision_to_z_buffer (
                     ray_position_x,
                     ray_position_y,
         */
-        let mut ray_position_for_map_collision_x: i8 = ray_position_x.floor() as i8;
+        let mut ray_position_for_map_collision_x: i8 = ray_position_x as i8;
         if 90.0 < ray_angle && ray_angle < 270.0 {
             ray_position_for_map_collision_x = f64::ceil(ray_position_x - 1.0) as i8;
         }
-        let mut ray_position_for_map_collision_y: i8 = ray_position_y.floor() as i8;
+        let mut ray_position_for_map_collision_y: i8 = ray_position_y as i8;
 
         if 180.0 < ray_angle && ray_angle < 360.0 {
             ray_position_for_map_collision_y = f64::ceil(ray_position_y - 1.0) as i8;
@@ -209,8 +209,8 @@ fn move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64) -> Ve
         let mut ray_pos_y = ray_position_y;
 
         if 0.0 <= ray_angle && ray_angle <= 90.0 {
-            let ray_length_delta_x = 1.0 + ray_position_x.floor() - ray_pos_x;
-            let ray_length_delta_y = 1.0 + ray_position_y.floor() - ray_pos_y;
+            let ray_length_delta_x = 1.0 + ray_position_x as i32 as f64 - ray_pos_x;
+            let ray_length_delta_y = 1.0 + ray_position_y as i32 as f64 - ray_pos_y;
 
             let ray_angle_to_tile_edge = f64::to_degrees(f64::atan(ray_length_delta_y / ray_length_delta_x));
 
@@ -223,8 +223,8 @@ fn move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64) -> Ve
             }
 
         } else if 90.0 < ray_angle && ray_angle < 180.0 {
-            let ray_length_delta_x = 1.0 - f64::ceil(ray_position_x).floor() + ray_position_x;
-            let ray_length_delta_y = 1.0 + ray_position_y.floor() - ray_position_y;
+            let ray_length_delta_x = 1.0 - f64::ceil(ray_position_x) as i32 as f64 + ray_position_x;
+            let ray_length_delta_y = 1.0 + ray_position_y as i32 as f64 - ray_position_y;
             let ray_angle_to_tile_edge = 90.0 + f64::to_degrees(f64::atan(ray_length_delta_x / ray_length_delta_y));
 
             if ray_angle_to_tile_edge <= ray_angle {
@@ -236,8 +236,8 @@ fn move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64) -> Ve
             }
 
         } else if  180.0 <= ray_angle && ray_angle < 270.0 {
-            let ray_length_delta_x = 1.0 - f64::ceil(ray_position_x).floor()  + ray_position_x;
-            let ray_length_delta_y = 1.0 - f64::ceil(ray_position_y).floor()  + ray_position_y;
+            let ray_length_delta_x = 1.0 - f64::ceil(ray_position_x) as i32 as f64  + ray_position_x;
+            let ray_length_delta_y = 1.0 - f64::ceil(ray_position_y) as i32 as f64  + ray_position_y;
             let ray_angle_to_tile_edge = 180.0 + f64::to_degrees(f64::atan(ray_length_delta_y / ray_length_delta_x));
 
             if ray_angle_to_tile_edge > ray_angle {
@@ -249,8 +249,8 @@ fn move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64) -> Ve
             }
 
         } else if  270.0 <= ray_angle && ray_angle < 360.0 {
-            let ray_length_delta_x = 1.0 + ray_pos_x.floor()  - ray_pos_x;
-            let ray_length_delta_y = 1.0 - f64::ceil(ray_position_y).floor()  + ray_position_y;
+            let ray_length_delta_x = 1.0 + ray_pos_x as i32 as f64  - ray_pos_x;
+            let ray_length_delta_y = 1.0 - f64::ceil(ray_position_y) as i32 as f64  + ray_position_y;
             let ray_angle_to_tile_edge = 270.0 + f64::to_degrees(f64::atan(ray_length_delta_x / ray_length_delta_y));
 
             if ray_angle_to_tile_edge > ray_angle {

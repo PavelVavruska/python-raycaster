@@ -160,10 +160,10 @@ class Engine:
                             selected_player.velocity_y - math.sin(math.radians(selected_player.angle)) / 5)
 
                     if event.key == pylocs.K_d:
-                        selected_player.set_angle(selected_player.angle + 5)
+                        selected_player.set_angle(selected_player.angle + 0.3)
 
                     if event.key == pylocs.K_a:
-                        selected_player.set_angle(selected_player.angle - 5)
+                        selected_player.set_angle(selected_player.angle - 0.3)
 
         return False
 
