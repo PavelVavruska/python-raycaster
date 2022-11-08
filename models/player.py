@@ -22,7 +22,7 @@ import math
 import random
 
 MAX_VELOCITY_ANGLE = 10
-MAX_VELOCITY_STEP = 2
+MAX_VELOCITY_STEP = 0.2
 EFFECT_MULTIPLIER = 10  # magic number for game balancing
 
 

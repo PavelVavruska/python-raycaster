@@ -31,6 +31,9 @@ from constants import Constants
 from renderer import Renderer
 from mathematics.raycasting.raycaster import Raycaster
 
+
+from rustlib import get_x_cor_ordered_z_buffer_data_rust
+
 if TYPE_CHECKING:
     from models.player import Player
     from models.map import Map
@@ -157,10 +160,10 @@ class Engine:
                             selected_player.velocity_y - math.sin(math.radians(selected_player.angle)) / 5)
 
                     if event.key == pylocs.K_d:
-                        selected_player.set_angle(selected_player.angle + 5)
+                        selected_player.set_angle(selected_player.angle + 0.3)
 
                     if event.key == pylocs.K_a:
-                        selected_player.set_angle(selected_player.angle - 5)
+                        selected_player.set_angle(selected_player.angle - 0.3)
 
         return False
 
@@ -283,7 +286,7 @@ class Engine:
                 player_pos_x = selected_player.x
                 player_pos_y = selected_player.y
 
-                x_cor_ordered_z_buffer_objects = Raycaster.get_x_cor_ordered_z_buffer_data(
+                x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                     player_angle=player_angle,
                     player_pos_x=player_pos_x,
                     player_pos_y=player_pos_y,
