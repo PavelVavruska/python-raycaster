@@ -64,19 +64,19 @@ fn calculate_collision_to_z_buffer (
                     ray_position_x,
                     ray_position_y,
         */
-        let mut ray_position_for_map_collision_x: i8 = ray_position_x as i8;
+        let mut ray_position_for_map_collision_x: i32 = ray_position_x as i32;
         if 90.0 < ray_angle && ray_angle < 270.0 {
-            ray_position_for_map_collision_x = f64::ceil(ray_position_x - 1.0) as i8;
+            ray_position_for_map_collision_x = f64::ceil(ray_position_x - 1.0) as i32;
         }
-        let mut ray_position_for_map_collision_y: i8 = ray_position_y as i8;
+        let mut ray_position_for_map_collision_y: i32 = ray_position_y as i32;
 
         if 180.0 < ray_angle && ray_angle < 360.0 {
-            ray_position_for_map_collision_y = f64::ceil(ray_position_y - 1.0) as i8;
+            ray_position_for_map_collision_y = f64::ceil(ray_position_y - 1.0) as i32;
         }
             
 
-        if 0 <= ray_position_for_map_collision_x && ray_position_for_map_collision_x < game_map_size_x as i8 &&
-                00 <= ray_position_for_map_collision_y && ray_position_for_map_collision_y < game_map_size_y as i8 {
+        if 0 <= ray_position_for_map_collision_x && ray_position_for_map_collision_x < game_map_size_x as i32 &&
+                0 <= ray_position_for_map_collision_y && ray_position_for_map_collision_y < game_map_size_y as i32 {
 
             let object_on_the_map_type_id = game_map[
                 ray_position_for_map_collision_y as usize][ray_position_for_map_collision_x as usize];
@@ -122,7 +122,8 @@ fn calculate_collision_to_z_buffer (
                 )
             }
     }
-    (1, 1.0, 1, 1.0, 1.0, 1.0, 1.0)
+    !unreachable!()
+    //(1, 1.0, 1, 1.0, 1.0, 1.0, 1.0)
 
 }
 
@@ -150,17 +151,22 @@ fn get_x_cor_ordered_z_buffer_data_rust(_py: Python,
             
             // degrees fixed to range 0 - 359
             ray_angle %= 360.0;
+            
+
+            if ray_angle < 0.0 {
+                ray_angle += 360.0;
+            }
 
             let mut ray_position_x = player_pos_x;  // start position of ray on X axis
             let mut ray_position_y = player_pos_y;  // start position of ray on Y axis
 
             let mut z_buffer_objects: Vec<(f64,f64,f64,f64,f64,f64,usize,f64)> = vec![];
-            let mut ttl = 1000;
+            
 
             while 0.0 < ray_position_x && ray_position_x < game_map_size_x as f64 &&
-                0.0 < ray_position_y && ray_position_y < game_map_size_y as f64 && ttl > 0
+                0.0 < ray_position_y && ray_position_y < game_map_size_y as f64
              {
-                ttl -= 1;
+                
                 let detected = calculate_collision_to_z_buffer(
                     ray_angle, ray_position_x, ray_position_y,
                     &game_map, game_map_size_x, game_map_size_y,
