@@ -352,7 +352,7 @@ class Engine:
                 mini_map_factor=mini_map_factor
             )
 
-            self.clock.tick(30)  # make sure game doesn't run at more than 30 frames per second
+            self.clock.tick(60)  # make sure game doesn't run at more than 30 frames per second
 
             screen = pygame.display.get_surface()
 

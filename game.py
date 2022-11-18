@@ -12,7 +12,7 @@ def main():
         fov=80,
         is_perspective_correction_on=True,
         is_metric_on=True,
-        pixel_size=3,
+        pixel_size=1,
         dynamic_lighting=False,
         texture_filtering=True
     )
