@@ -31,8 +31,11 @@ from constants import Constants
 from renderer import Renderer
 from mathematics.raycasting.raycaster import Raycaster
 
+import numpy
+import pygame.surfarray as surfarray
 
-from rustlib import get_x_cor_ordered_z_buffer_data_rust
+
+from rustlib import get_x_cor_ordered_z_buffer_data_rust, main_rust
 
 if TYPE_CHECKING:
     from models.player import Player
@@ -45,6 +48,7 @@ _logger = logging.getLogger(__name__)
 class Engine:
 
     def __init__(self, players, game_map, config):
+        #### main_rust(1.0)
         # constructor injection
         self.players = players
         self.round_of_units = {}
@@ -285,7 +289,10 @@ class Engine:
                 player_angle = selected_player.angle
                 player_pos_x = selected_player.x
                 player_pos_y = selected_player.y
+                xx = Constants.WINDOW_WIDTH
+                yy = Constants.WINDOW_HEIGHT
 
+                #x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                 x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                     player_angle=player_angle,
                     player_pos_x=player_pos_x,
@@ -293,19 +300,40 @@ class Engine:
                     config_fov=config_fov,
                     config_pixel_size=config_pixel_size,
                     config_is_perspective_correction_on=config_is_perspective_correction_on,
-                    mini_map_offset_x=mini_map_offset_x,
+                    mini_map_offset_x=99,
                     game_map_size_x=game_map_size_x,
                     game_map_size_y=game_map_size_y,
                     game_map=game_map_data
                 )
-                Renderer.draw_from_z_buffer_objects(
+
+                
+                """Renderer.draw_from_z_buffer_objects(
                     player_angle=player_angle,
                     surface=pygame_surface,
                     dynamic_lighting=config_dynamic_lighting,
                     pixel_size=config_pixel_size,
                     window_height=int(window_height),
                     x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
-                )
+                )"""
+                #x=[[1,2],[1,2,3],[1]]
+                #y=numpy.array([numpy.array(xi) for xi in x_cor_ordered_z_buffer_objects[1::]])
+                #striped = numpy.array(x_cor_ordered_z_buffer_objects)
+                #striped2 = numpy.zeros((Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT, 3))
+                #striped[:] = (255, 0, 0)
+                #striped[:,::30] = (0, 255, 255)
+
+                # (Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT)
+                #data = pygame.image.tostring(pygame_surface, 'RGBA')
+                # b'\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00 
+                #a = 1
+                pygame_surface = pygame.image.frombuffer(x_cor_ordered_z_buffer_objects, (Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT), 'RGBA') 
+                #pygame_surface = pygame.transform.rotate(pygame_surface, 90)
+                #print("a")
+
+                #pygame_surface.
+                #pygame_surface = pygame.surfarray.make_surface(y)
+                #pygame_surface.fill()
+
             else:
                 Renderer.draw_disabled_screen(
                     surface=pygame_surface,

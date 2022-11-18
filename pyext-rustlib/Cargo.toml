@@ -13,3 +13,6 @@ crate-type = ["dylib"]
 [dependencies.cpython]
 version = "0.7"
 features = ["extension-module"]
+
+[dependencies]
+piston_window = "0.124.0"

@@ -5,6 +5,8 @@ from renderers.linebyline import LineByLine
 import pygame
 
 
+
+
 class Renderer:
     pixel_data = pygame.image.load("static/textures.png")
     grass_pixel_data = pygame.image.load("static/grass.png")
@@ -13,7 +15,7 @@ class Renderer:
 
     @classmethod
     def draw_minimap(cls, surface, offset_x, offset_y, game_map_data, players, player_index, selected_position, mini_map_factor):
-
+                
         # render minimap (player, )
         # draw objects
         for id_y, y in enumerate(game_map_data):
@@ -139,6 +141,7 @@ class Renderer:
                         y_cor_texture = max(0, min(y_cor_texture, 127))
                         red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
 
+                        # ceiling
                         pygame.draw.line(surface, (0, 0, blue), (screen_x, position_move),
                                          (
                                              screen_x, position_move + pixel_size),
@@ -164,6 +167,7 @@ class Renderer:
                         y_cor_texture = max(0, min(y_cor_texture, 127))
                         red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
 
+                        # floor
                         pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
                                          (
                                              screen_x, position_move + pixel_size),
@@ -200,6 +204,7 @@ class Renderer:
                                            int(current_pixel_position)):
                                 if y < 0 or y > window_height:
                                     continue
+                                # walls
                                 pygame.draw.line(surface, result_color_tuple, (screen_x, y),
                                                  (
                                                      screen_x, y + pixel_size),
