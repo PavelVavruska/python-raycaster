@@ -562,14 +562,13 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                     last_pixel_position = Some(current_pixel_position);
                 }
             }
-
             last_ceiling_position = Some(start as usize);
             last_floor_position = Some(start as usize + wall_vertical_length_full as usize);
-            //let (last_offset_x, last_offset_y) = (texture_start_x, texture_start_y);
         }
     }
     
-    for y in 0..128 {
+    /* DEBUG GENERAL TEXTURE */
+    /*for y in 0..128 {
         for x in 0..512 {
 
             let index_base = (y*512*4+x*4) as usize;
@@ -581,9 +580,8 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
 
             canvas[y as usize][x] = (red, green, blue, alpha);
         }
-    }
+    }*/
     
-    //let a = 
     canvas
 }
 

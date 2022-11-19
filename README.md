@@ -15,6 +15,13 @@ Raycaster engine is inspired by 90's PC games. It takes three inputs:
 * deprecated `L - dynamic lighting on / off`
 * `Mouse click on minimap - execute move to the selected place by using Dijkstra's Shortest Path First algorithm.`
 
+<img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20221119.png">
+19.11.2022 version (405b1bae47b3b76bd0297029ba62814bf6be082b):
+
+### Features
++ Raycasting and texture mapping rewritten into Rust. Result 50x faster.
+
+
 <img alt="Description" src="https://github.com/PavelVavruska/python-raycaster/blob/master/raycaster_20200404.png">
 04.04.2020 version (e548d8ef46d51d38eaf9363b63c414a916d9b533):
 
