@@ -1407,6 +1407,7 @@ name = "pyext-rustlib"
 version = "0.1.0"
 dependencies = [
  "cpython",
+ "image",
  "piston_window",
 ]
 

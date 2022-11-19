@@ -292,6 +292,8 @@ class Engine:
                 xx = Constants.WINDOW_WIDTH
                 yy = Constants.WINDOW_HEIGHT
 
+                pixels = Renderer.pixel_data
+                general_texture = pygame.image.tobytes(pixels, 'RGBA', False)
                 #x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                 x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                     player_angle=player_angle,
@@ -303,7 +305,8 @@ class Engine:
                     mini_map_offset_x=99,
                     game_map_size_x=game_map_size_x,
                     game_map_size_y=game_map_size_y,
-                    game_map=game_map_data
+                    game_map=game_map_data,
+                    general_texture=general_texture
                 )
 
                 
@@ -326,7 +329,7 @@ class Engine:
                 #data = pygame.image.tostring(pygame_surface, 'RGBA')
                 # b'\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00 
                 #a = 1
-                pygame_surface = pygame.image.frombuffer(x_cor_ordered_z_buffer_objects, (Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT), 'RGBA') 
+                pygame_surface = pygame.image.frombuffer(x_cor_ordered_z_buffer_objects, (Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT), 'RGBA')
                 #pygame_surface = pygame.transform.rotate(pygame_surface, 90)
                 #print("a")
 

@@ -16,3 +16,4 @@ features = ["extension-module"]
 
 [dependencies]
 piston_window = "0.124.0"
+image = "0.24.5"

@@ -1,5 +1,8 @@
 #[macro_use]
 extern crate cpython;
+use std::io::Cursor;
+
+
 
 use std::cmp::{max, min};
 use std::vec;
@@ -139,7 +142,8 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
     mini_map_offset_x: usize,
     game_map_size_x: usize,
     game_map_size_y: usize,
-    game_map: Vec<Vec<i8>>) -> [u8; WINDOW_WIDTH*WINDOW_HEIGHT*4] {
+    game_map: Vec<Vec<i8>>,
+    general_texture: &[u8]) -> [u8; WINDOW_WIDTH*WINDOW_HEIGHT*4] {
         let config_fov_f = config_fov as f64;
 
         let player_angle_start = player_angle - config_fov_f / 2.0;
@@ -230,7 +234,7 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
         */
         //let mut result2 = [0 as u8; BYTES_LEN];
         let mut index = 0;
-        for row in draw_from_z_buffer_objects(player_angle, x_cor_z_buffer_objects) {
+        for row in draw_from_z_buffer_objects(player_angle, x_cor_z_buffer_objects, general_texture) {
             
             for tuple in row {
                 //println!("{tuple:?}");
@@ -241,7 +245,7 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
                 index += 1;
                 result2[index] = tuple.2 as u8;
                 index += 1;
-                result2[index] = 254 as u8;
+                result2[index] = tuple.3 as u8;
                 index += 1;
             }
         }
@@ -267,13 +271,16 @@ fn get_x_cor_ordered_z_buffer_data_rust(py: Python,
     mini_map_offset_x: usize,
     game_map_size_x: usize,
     game_map_size_y: usize,
-    game_map: Vec<Vec<i8>>) -> PyResult<PyBytes> {// PyResult<Vec<Vec<(i32, i32, i32)>>> {//PyResult<[[(i32, i32, i32); 480]; 640]> {//PyResult<Vec<Vec<(i8,i8,i8)>>> {
+    game_map: Vec<Vec<i8>>,
+    general_texture: PyBytes) -> PyResult<PyBytes> {// PyResult<Vec<Vec<(i32, i32, i32)>>> {//PyResult<[[(i32, i32, i32); 480]; 640]> {//PyResult<Vec<Vec<(i8,i8,i8)>>> {
     /*PyResult<Vec<(f64, Vec<(f64,f64,f64,f64,f64,f64,usize,f64)>)>> {*/
         //let map = GameMap { data: game_map };
 
+        let texture_bytes = general_texture.data(py);
+        
         let array = inner_x_cor_ordered_z_buffer(player_angle,player_pos_x,player_pos_y,config_fov,config_pixel_size,config_is_perspective_correction_on,mini_map_offset_x,
-            game_map_size_x,game_map_size_y,game_map);
-
+            game_map_size_x,game_map_size_y,game_map, texture_bytes);
+        
         let result = PyBytes::new(py, &array);
         
         Ok(result)
@@ -350,9 +357,9 @@ fn move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64) -> Ve
 
 }
 
-fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects: Vec<(usize, Vec<(f64,f64,f64,f64,f64,f64,usize,f64)>)>) -> [[(u8, u8, u8); WINDOW_WIDTH]; WINDOW_HEIGHT] {//Vec<Vec<(i8,i8,i8)>> {
+fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects: Vec<(usize, Vec<(f64,f64,f64,f64,f64,f64,usize,f64)>)>,general_texture: &[u8]) -> [[(u8, u8, u8, u8); WINDOW_WIDTH]; WINDOW_HEIGHT] {//Vec<Vec<(i8,i8,i8)>> {
     //let row = [(0,0,0); 480].to_vec();
-    let mut canvas = [[(0,0,0); WINDOW_WIDTH]; WINDOW_HEIGHT]; //vec![vec![]];
+    let mut canvas = [[(0,0,0,0); WINDOW_WIDTH]; WINDOW_HEIGHT]; //vec![vec![]];
     let dynamic_lighting = true;
     let pixel_size = 1;
     let window_height = WINDOW_HEIGHT;
@@ -406,7 +413,7 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                     let color = max(0, min(255, (255 - i32::abs(object_distance as i32 * 30)) as i32));
                     let mut x = 0;
                     for position_move in (y_ceiling_start..y_ceiling_end.try_into().unwrap()).step_by(pixel_size) {
-                        let mut x_cor_texture = last_offset_x + texture_start_x_delta as i32 / ceiling_pos_delta * x * pixel_size as i32;
+                        /*let mut x_cor_texture = last_offset_x + texture_start_x_delta as i32 / ceiling_pos_delta * x * pixel_size as i32;
                         let mut y_cor_texture = last_offset_y + texture_start_y_delta as i32 / ceiling_pos_delta * x * pixel_size as i32;
                         x += 1;
                         if x_cor_texture <= 1 {
@@ -419,7 +426,17 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
 
                         x_cor_texture = max(0, min(x_cor_texture, 511));
                         y_cor_texture = max(0, min(y_cor_texture, 127));
-                        let (red, green, blue, alpha) = (255 as u8,255 as u8,255 as u8,50 as u8); //TODO FIX cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)));
+                        //grass_pixel_data = pygame.image.load("static/grass.png")
+                        //red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
+
+                        let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                        let index_red = index_base;
+                        let index_green = index_base+1;
+                        let index_blue = index_base+2;
+                        let index_alpha = index_base+3;
+                        let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]);*/
+
+                        let (red, green, blue, alpha) = (30 as u8,30 as u8,30 as u8,255 as u8); //TODO FIX cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)));
 
                         // ceiling
                         /*pygame.draw.line(surface, (0, 0, blue), (screen_x, position_move),
@@ -427,7 +444,7 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                                                 screen_x, position_move + pixel_size),
                                             pixel_size)*/
                         if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT.try_into().unwrap() {
-                            canvas[position_move as usize][screen_x] = (red, green, blue);
+                            canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
                         }
                     }
 
@@ -442,7 +459,7 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
 
                     x = 0;
                     for position_move in (tile_pos_start..tile_pos_end).step_by(pixel_size) {
-                        let mut x_cor_texture = last_offset_x + texture_start_x_delta as i32 / tile_pos_delta as i32 * x * pixel_size as i32;
+                        /*let mut x_cor_texture = last_offset_x + texture_start_x_delta as i32 / tile_pos_delta as i32 * x * pixel_size as i32;
                         let mut y_cor_texture = last_offset_y + texture_start_y_delta as i32 / tile_pos_delta as i32 * x * pixel_size as i32;
                         x += 1;
                         if x_cor_texture <= 1 {
@@ -456,7 +473,17 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
 
                         x_cor_texture = max(0, min(x_cor_texture, 511));
                         y_cor_texture = max(0, min(y_cor_texture, 127));
-                        let (red, green, blue, alpha) = (255 as u8,255 as u8,50 as u8,50 as u8);; //TODO FIX cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)));
+                        // grass_pixel_data = pygame.image.load("static/grass.png")
+                        // red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
+
+                        let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                        let index_red = index_base;
+                        let index_green = index_base+1;
+                        let index_blue = index_base+2;
+                        let index_alpha = index_base+3;
+                        let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]);*/
+
+                        let (red, green, blue, alpha) = (120 as u8,120 as u8,120 as u8,255 as u8); //TODO FIX cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)));
 
                         // floor
                         /*pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
@@ -464,7 +491,7 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                                                 screen_x, position_move + pixel_size),
                                             pixel_size)*/
                         if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT {
-                            canvas[position_move as usize][screen_x] = (red, green, blue);
+                            canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
                         }
                         
                     }
@@ -489,7 +516,14 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
 
                     x_cor_texture = max(0, min(x_cor_texture, 511));
                     y_cor_texture = max(0, min(y_cor_texture, 127));
-                    let (red, green, blue, alpha) = (50 as u8,50 as u8,255 as u8,255 as u8);;//TODO FIX cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
+                    
+                    let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                    let index_red = index_base;
+                    let index_green = index_base+1;
+                    let index_blue = index_base+2;
+                    let index_alpha = index_base+3;
+                    let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]); //(50 as u8,50 as u8,255 as u8,255 as u8);;//TODO FIX cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
+                    //red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
 
                     let current_pixel_position = start as i32 + vertical_wall_pixel;
                     if green > 0 {                    
@@ -502,7 +536,7 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                             blue -= distance_dark_blue if blue > distance_dark_blue else blue;
                         }*/
 
-                        let result_color_tuple = (red, green, blue);
+                        let result_color_tuple = (red, green, blue, alpha);
 
                         let mut pixel_position = 0;
                         if let Some(position) = last_pixel_position {
@@ -521,7 +555,7 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                                                     screen_x, y + pixel_size),
                                                 pixel_size)*/
                             if screen_x < WINDOW_WIDTH {
-                                canvas[y as usize][screen_x] = (red, green, blue);
+                                canvas[y as usize][screen_x] = (red, green, blue, alpha);
                             }
                         }
                     }                    
@@ -535,7 +569,19 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
         }
     }
     
-    
+    for y in 0..128 {
+        for x in 0..512 {
+
+            let index_base = (y*512*4+x*4) as usize;
+            let index_red = index_base;
+            let index_green = index_base+1;
+            let index_blue = index_base+2;
+            let index_alpha = index_base+3;
+            let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]);
+
+            canvas[y as usize][x] = (red, green, blue, alpha);
+        }
+    }
     
     //let a = 
     canvas
@@ -543,8 +589,6 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
 
 
 extern crate piston_window;
-
-
 
 use piston_window::types::Color;
 use piston_window::*;
@@ -643,7 +687,8 @@ py_module_initializer!(rustlib, |py, m | {
         mini_map_offset_x: usize,
         game_map_size_x: usize,
         game_map_size_y: usize,
-        game_map: Vec<Vec<i8>>)))?;
+        game_map: Vec<Vec<i8>>,
+        general_texture: PyBytes)))?;
     m.add(py, "main_rust", py_fn!(py, main_rust(text: f64)))?;
     
     Ok(())
@@ -684,7 +729,7 @@ mod tests {
 
         let array = inner_x_cor_ordered_z_buffer(player_angle, player_pos_x,
             player_pos_y,config_fov,config_pixel_size,config_is_perspective_correction_on,
-            mini_map_offset_x,game_map_size_x,game_map_size_y,game_map);
+            mini_map_offset_x,game_map_size_x,game_map_size_y,game_map, &[255,255,255]);
         let a = 10;
         assert_eq!(1,1);
 }
