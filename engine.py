@@ -289,12 +289,9 @@ class Engine:
                 player_angle = selected_player.angle
                 player_pos_x = selected_player.x
                 player_pos_y = selected_player.y
-                xx = Constants.WINDOW_WIDTH
-                yy = Constants.WINDOW_HEIGHT
 
                 pixels = Renderer.pixel_data
                 general_texture = pygame.image.tobytes(pixels, 'RGBA', False)
-                #x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                 x_cor_ordered_z_buffer_objects = get_x_cor_ordered_z_buffer_data_rust(
                     player_angle=player_angle,
                     player_pos_x=player_pos_x,
@@ -308,35 +305,7 @@ class Engine:
                     game_map=game_map_data,
                     general_texture=general_texture
                 )
-
-                
-                """Renderer.draw_from_z_buffer_objects(
-                    player_angle=player_angle,
-                    surface=pygame_surface,
-                    dynamic_lighting=config_dynamic_lighting,
-                    pixel_size=config_pixel_size,
-                    window_height=int(window_height),
-                    x_cor_ordered_z_buffer_data=x_cor_ordered_z_buffer_objects,
-                )"""
-                #x=[[1,2],[1,2,3],[1]]
-                #y=numpy.array([numpy.array(xi) for xi in x_cor_ordered_z_buffer_objects[1::]])
-                #striped = numpy.array(x_cor_ordered_z_buffer_objects)
-                #striped2 = numpy.zeros((Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT, 3))
-                #striped[:] = (255, 0, 0)
-                #striped[:,::30] = (0, 255, 255)
-
-                # (Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT)
-                #data = pygame.image.tostring(pygame_surface, 'RGBA')
-                # b'\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00 
-                #a = 1
                 pygame_surface = pygame.image.frombuffer(x_cor_ordered_z_buffer_objects, (Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT), 'RGBA')
-                #pygame_surface = pygame.transform.rotate(pygame_surface, 90)
-                #print("a")
-
-                #pygame_surface.
-                #pygame_surface = pygame.surfarray.make_surface(y)
-                #pygame_surface.fill()
-
             else:
                 Renderer.draw_disabled_screen(
                     surface=pygame_surface,
