@@ -316,15 +316,16 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                 if object_type != 2 {
                     // draw ceiling and floor
 
-
                     let y_ceiling_start = max(0, start as i32);
                     let y_ceiling_end = min(half_window_height, last_ceiling_position_some);
                     let ceiling_pos_delta: i32 = y_ceiling_end as i32 - y_ceiling_start;
                     let color = max(0, min(255, (255 - i32::abs(object_distance as i32 * 30)) as i32));
                     let mut x = 0;
                     for position_move in (y_ceiling_start..y_ceiling_end.try_into().unwrap()).step_by(pixel_size) {
-                        /*let mut x_cor_texture = last_offset_x + texture_start_x_delta as i32 / ceiling_pos_delta * x * pixel_size as i32;
-                        let mut y_cor_texture = last_offset_y + texture_start_y_delta as i32 / ceiling_pos_delta * x * pixel_size as i32;
+                        let base_x = 64*4;
+                        let base_y = 64;
+                        let mut x_cor_texture = base_x+last_offset_x + (texture_start_x_delta / ceiling_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
+                        let mut y_cor_texture = base_y+last_offset_y + (texture_start_y_delta / ceiling_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
                         x += 1;
                         if x_cor_texture <= 1 {
                             x_cor_texture = 1;
@@ -334,25 +335,17 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
                             y_cor_texture = 1;
                         }
 
-                        x_cor_texture = max(0, min(x_cor_texture, 511));
-                        y_cor_texture = max(0, min(y_cor_texture, 127));
-                        //grass_pixel_data = pygame.image.load("static/grass.png")
-                        //red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
+                        x_cor_texture = max(base_x, min(x_cor_texture, base_x+64));
+                        y_cor_texture = max(base_y, min(y_cor_texture, base_y+64));
 
                         let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                        
                         let index_red = index_base;
                         let index_green = index_base+1;
                         let index_blue = index_base+2;
                         let index_alpha = index_base+3;
-                        let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]);*/
+                        let (red, green, blue, alpha) = (0, 0, general_texture[index_blue], general_texture[index_alpha]);
 
-                        let (red, green, blue, alpha) = (30 as u8,30 as u8,30 as u8,255 as u8); //TODO FIX cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)));
-
-                        // ceiling
-                        /*pygame.draw.line(surface, (0, 0, blue), (screen_x, position_move),
-                                            (
-                                                screen_x, position_move + pixel_size),
-                                            pixel_size)*/
                         if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT.try_into().unwrap() {
                             canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
                         }
@@ -369,41 +362,26 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
 
                     x = 0;
                     for position_move in (tile_pos_start..tile_pos_end).step_by(pixel_size) {
-                        /*let mut x_cor_texture = last_offset_x + texture_start_x_delta as i32 / tile_pos_delta as i32 * x * pixel_size as i32;
-                        let mut y_cor_texture = last_offset_y + texture_start_y_delta as i32 / tile_pos_delta as i32 * x * pixel_size as i32;
-                        x += 1;
-                        if x_cor_texture <= 1 {
-                            x_cor_texture = 1;
-                        }                            
+                        let base_x = 64*4;
+                        let base_y = 64;
+                        let mut x_cor_texture = base_x+last_offset_x + (texture_start_x_delta / tile_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
+                        let mut y_cor_texture = base_y+last_offset_y + (texture_start_y_delta / tile_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
+                        x += 1;                        
 
-                        if y_cor_texture <= 1 {
-                            y_cor_texture = 1;
-                        }
-                            
-
-                        x_cor_texture = max(0, min(x_cor_texture, 511));
-                        y_cor_texture = max(0, min(y_cor_texture, 127));
-                        // grass_pixel_data = pygame.image.load("static/grass.png")
-                        // red, green, blue, alpha = cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)))
-
+                        x_cor_texture = max(base_x, min(x_cor_texture, base_x+64));
+                        y_cor_texture = max(base_y, min(y_cor_texture, base_y+64));
+                       
                         let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                        
                         let index_red = index_base;
                         let index_green = index_base+1;
                         let index_blue = index_base+2;
                         let index_alpha = index_base+3;
-                        let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]);*/
+                        let (red, green, blue, alpha) = (general_texture[index_red] / 4, general_texture[index_green] / 2, 0, general_texture[index_alpha]);
 
-                        let (red, green, blue, alpha) = (120 as u8,120 as u8,120 as u8,255 as u8); //TODO FIX cls.grass_pixel_data.get_at((int(x_cor_texture), int(y_cor_texture)));
-
-                        // floor
-                        /*pygame.draw.line(surface, (red, green, blue), (screen_x, position_move),
-                                            (
-                                                screen_x, position_move + pixel_size),
-                                            pixel_size)*/
-                        if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT {
+                        if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT.try_into().unwrap() {
                             canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
                         }
-                        
                     }
                 }
             }
