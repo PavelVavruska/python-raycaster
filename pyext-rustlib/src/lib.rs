@@ -6,6 +6,7 @@ use std::vec;
 
 use cpython::{Python, PyResult, PyBytes};
 
+use rayon::iter::Enumerate;
 use rayon::prelude::*;
 
 
@@ -97,12 +98,17 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
     game_map_size_y: usize,
     game_map: Vec<Vec<i8>>,
     general_texture: &[u8]) -> [u8; WINDOW_WIDTH*WINDOW_HEIGHT*4] {
+
+        let dynamic_lighting = true;
+        let pixel_size = 1;
+        let window_height = WINDOW_HEIGHT;
+        let half_window_height = window_height / 2;
+        let double_window_height = window_height * 2;
+
         let config_fov_f = config_fov as f64;
-
         let player_angle_start = player_angle - config_fov_f / 2.0;
-        let mut x_cor_z_buffer_objects: Vec<(usize, Vec<(f64,f64,f64,f64,f64,f64,usize,f64)>)> = vec![];        
 
-        x_cor_z_buffer_objects = (0..WINDOW_WIDTH).into_par_iter().map(|screen_x| {
+        let canvas_vec: Vec<Vec<(u8, u8, u8, u8)>> = (0..WINDOW_WIDTH).into_par_iter().map(|screen_x| {
         
         
             let mut ray_angle = player_angle_start + config_fov_f / WINDOW_WIDTH as f64 * screen_x as f64;
@@ -152,18 +158,204 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
                 ray_position_y = obj[1];
 
             }
-            (screen_x, z_buffer_objects)            
+            // result old 1 (screen_x, z_buffer_objects)    
+
+            // collect z buffer objects into 2d array
+
+            let mut last_floor_position = None;
+            let mut last_ceiling_position = None;
+            let last_offset_x = 0;
+            let last_offset_y = 0;
+
+            let mut canvas_line: Vec<(u8,u8,u8,u8)> = [(0,0,0,0); WINDOW_WIDTH].to_vec();
+            
+            for entry in z_buffer_objects.iter().rev() {
+
+                // actual line by line rendering of the visible object
+                let (mut object_distance, object_id, offset_x, offset_y, ray_x, ray_y, object_type, ray_angle) = *entry;
+                if object_distance < 0.01 {
+                    object_distance = 0.01;
+                }
+                    
+                let start = half_window_height as f64 - window_height as f64 / (object_distance * 2.0);
+                let wall_vertical_length_full = double_window_height as f64 / (object_distance * 2.0);
+
+                let size_of_texture_pixel = (wall_vertical_length_full / 64.0) as i32;
+                let mut one_artificial_pixel_size = size_of_texture_pixel;
+                if size_of_texture_pixel <= 0 {
+                    one_artificial_pixel_size = 1;
+                }
+
+                let mut last_pixel_position = None;
+
+                if last_ceiling_position.is_none() {
+                    last_ceiling_position = Some(0);
+                }
+                if last_floor_position.is_none(){
+                    last_floor_position = Some(window_height);
+                }
+
+                let texture_start_x = ray_x * 48.0 % 64.0;  // TODO
+                let texture_start_y = ray_y * 48.0 % 64.0;
+                let texture_start_x_delta = texture_start_x - last_offset_x as f64;
+                let texture_start_y_delta = texture_start_y - last_offset_y as f64;
+                if let Some(last_ceiling_position_some) = last_ceiling_position {// && object_type != 2 {  // skip only for walls
+                    if object_type != 2 {
+                        // draw ceiling and floor
+
+                        let y_ceiling_start = max(0, start as i32);
+                        let y_ceiling_end = min(half_window_height, last_ceiling_position_some);
+                        let ceiling_pos_delta: i32 = y_ceiling_end as i32 - y_ceiling_start;
+                        let color = max(0, min(255, (255 - i32::abs(object_distance as i32 * 30)) as i32));
+                        let mut x = 0;
+                        for position_move in (y_ceiling_start..y_ceiling_end.try_into().unwrap()).step_by(pixel_size) {
+                            let base_x = 64*4;
+                            let base_y = 64;
+                            let mut x_cor_texture = base_x+last_offset_x + (texture_start_x_delta / ceiling_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
+                            let mut y_cor_texture = base_y+last_offset_y + (texture_start_y_delta / ceiling_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
+                            x += 1;
+                            if x_cor_texture <= 1 {
+                                x_cor_texture = 1;
+                            }
+
+                            if y_cor_texture <= 1 {
+                                y_cor_texture = 1;
+                            }
+
+                            x_cor_texture = max(base_x, min(x_cor_texture, base_x+64));
+                            y_cor_texture = max(base_y, min(y_cor_texture, base_y+64));
+
+                            let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                            
+                            let index_red = index_base;
+                            let index_green = index_base+1;
+                            let index_blue = index_base+2;
+                            let index_alpha = index_base+3;
+                            let (red, green, blue, alpha) = (0, 0, general_texture[index_blue], general_texture[index_alpha]);
+
+                            if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT.try_into().unwrap() {
+                                canvas_line[position_move as usize] = (red, green, blue, alpha);
+                                //canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
+                                //(red, green, blue, alpha)
+                            }
+                        }
+
+                        // FLOOR
+                        let mut floor_position = 0;
+                        if let Some(position) = last_floor_position {
+                            floor_position = position;
+                        }
+                        let tile_pos_start = max(half_window_height, floor_position);
+                        let tile_pos_end = min(window_height, start as usize + wall_vertical_length_full as usize);
+                        let tile_pos_delta_raw = if tile_pos_end > tile_pos_start { tile_pos_end - tile_pos_start } else { 1 };
+                        let tile_pos_delta = min(window_height, max(1, tile_pos_delta_raw));
+                        //TODO FIX OVERFLOW let tile_pos_delta = tile_pos_end - tile_pos_start;
+
+                        x = 0;
+                        for position_move in (tile_pos_start..tile_pos_end).step_by(pixel_size) {
+                            let base_x = 64*4;
+                            let base_y = 64;
+                            let mut x_cor_texture = base_x+last_offset_x + (texture_start_x_delta / tile_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
+                            let mut y_cor_texture = base_y+last_offset_y + (texture_start_y_delta / tile_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
+                            x += 1;                        
+
+                            x_cor_texture = max(base_x, min(x_cor_texture, base_x+64));
+                            y_cor_texture = max(base_y, min(y_cor_texture, base_y+64));
+                        
+                            let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                            
+                            let index_red = index_base;
+                            let index_green = index_base+1;
+                            let index_blue = index_base+2;
+                            let index_alpha = index_base+3;
+                            let (red, green, blue, alpha) = (general_texture[index_red] / 4, general_texture[index_green] / 2, 0, general_texture[index_alpha]);
+
+                            if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT.try_into().unwrap() {
+                                canvas_line[position_move as usize] = (red, green, blue, alpha);
+                                //canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
+                            }
+                        }
+                    }
+                }
+
+                if object_type != 3 {  // for walls and objects  # and object_distance > 0.4
+                    let object_id_with_offset = object_id + offset_x + offset_y;
+                    for vertical_wall_pixel in (0..(wall_vertical_length_full) as i32).step_by(one_artificial_pixel_size.try_into().unwrap()) {
+
+                    
+                        let mut y_cor_texture = (64.0 / wall_vertical_length_full * vertical_wall_pixel as f64) as i32;
+                        if object_type == 2 {
+                            y_cor_texture += 64;
+                        }
+                            
+                        let mut x_cor_texture = (object_id_with_offset * 64.0) as i32;
+
+                        if x_cor_texture <= 1 {
+                            x_cor_texture = 1;
+                        }
+
+                        x_cor_texture = max(0, min(x_cor_texture, 511));
+                        y_cor_texture = max(0, min(y_cor_texture, 127));
+                        
+                        let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
+                        let index_red = index_base;
+                        let index_green = index_base+1;
+                        let index_blue = index_base+2;
+                        let index_alpha = index_base+3;
+                        let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]); //(50 as u8,50 as u8,255 as u8,255 as u8);;//TODO FIX cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
+                        //red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
+
+                        let current_pixel_position = start as i32 + vertical_wall_pixel;
+                        if green > 0 {                    
+
+                            /*TODO LATER if dynamic_lighting {
+                                distance_dark_blue = (object_distance * 3) as i32;
+                                distance_dark = distance_dark_blue * 2;
+                                red -= distance_dark if red > distance_dark else red;
+                                green -= distance_dark if green > distance_dark else green;
+                                blue -= distance_dark_blue if blue > distance_dark_blue else blue;
+                            }*/
+
+                            let result_color_tuple = (red, green, blue, alpha);
+
+                            let mut pixel_position = 0;
+                            if let Some(position) = last_pixel_position {
+                                pixel_position = position;
+                            } else {
+                                pixel_position = current_pixel_position + 1;
+                            }
+                            for y in pixel_position..current_pixel_position {
+                                if y < 0 || y >= WINDOW_HEIGHT.try_into().unwrap()  {
+                                    continue;
+                                }
+                                    
+                                // walls                
+                                if screen_x < WINDOW_WIDTH {
+                                    canvas_line[y as usize] = (red, green, blue, alpha);
+                                    //canvas[y as usize][screen_x] = (red, green, blue, alpha);
+                                }
+                            }
+                        }                    
+                        last_pixel_position = Some(current_pixel_position);
+                    }
+                }
+                last_ceiling_position = Some(start as usize);
+                last_floor_position = Some(start as usize + wall_vertical_length_full as usize);
+            }
+            canvas_line
         }).collect();
 
         const BYTES_LEN: usize = WINDOW_WIDTH*WINDOW_HEIGHT*4 as usize;
         let mut result2 = [125 as u8; BYTES_LEN];
 
-        let mut index = 0;
-        for row in draw_from_z_buffer_objects(player_angle, x_cor_z_buffer_objects, general_texture) {
-            
-            for tuple in row {
-                //println!("{tuple:?}");
+        for (row_index, row) in canvas_vec.iter().enumerate() {
+            for (tuple_index, tuple) in row.iter().enumerate() {
+                let mut index = tuple_index*WINDOW_WIDTH*4 + row_index*4;
                 
+                if index >= 2400000 - 4 {    // TODO REMOVE THIS HOTFIX                
+                    break;
+                }
+
                 result2[index] = tuple.0 as u8;
                 index += 1;
                 result2[index] = tuple.1 as u8;
@@ -171,10 +363,9 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
                 result2[index] = tuple.2 as u8;
                 index += 1;
                 result2[index] = tuple.3 as u8;
-                index += 1;
+
             }
         }
-
         result2
     }
 
@@ -273,208 +464,6 @@ fn move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64) -> Ve
 
 }
 
-fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects: Vec<(usize, Vec<(f64,f64,f64,f64,f64,f64,usize,f64)>)>,general_texture: &[u8]) -> [[(u8, u8, u8, u8); WINDOW_WIDTH]; WINDOW_HEIGHT] {
-    let mut canvas = [[(0,0,0,0); WINDOW_WIDTH]; WINDOW_HEIGHT]; //vec![vec![]];
-    let dynamic_lighting = true;
-    let pixel_size = 1;
-    let window_height = WINDOW_HEIGHT;
-    let half_window_height = window_height / 2;
-    let double_window_height = window_height * 2;
-    for (screen_x, z_buffer_wall) in x_cor_ordered_z_buffer_objects {
-        
-        let mut last_floor_position = None;
-        let mut last_ceiling_position = None;
-        let last_offset_x = 0;
-        let last_offset_y = 0;
-        
-        for entry in z_buffer_wall.iter().rev() {
-
-            // actual line by line rendering of the visible object
-            let (mut object_distance, object_id, offset_x, offset_y, ray_x, ray_y, object_type, ray_angle) = *entry;
-            if object_distance < 0.01 {
-                object_distance = 0.01;
-            }
-                
-            let start = half_window_height as f64 - window_height as f64 / (object_distance * 2.0);
-            let wall_vertical_length_full = double_window_height as f64 / (object_distance * 2.0);
-
-            let size_of_texture_pixel = (wall_vertical_length_full / 64.0) as i32;
-            let mut one_artificial_pixel_size = size_of_texture_pixel;
-            if size_of_texture_pixel <= 0 {
-                one_artificial_pixel_size = 1;
-            }
-
-            let mut last_pixel_position = None;
-
-            if last_ceiling_position.is_none() {
-                last_ceiling_position = Some(0);
-            }
-            if last_floor_position.is_none(){
-                last_floor_position = Some(window_height);
-            }
-
-            let texture_start_x = ray_x * 48.0 % 64.0;  // TODO
-            let texture_start_y = ray_y * 48.0 % 64.0;
-            let texture_start_x_delta = texture_start_x - last_offset_x as f64;
-            let texture_start_y_delta = texture_start_y - last_offset_y as f64;
-            if let Some(last_ceiling_position_some) = last_ceiling_position {// && object_type != 2 {  // skip only for walls
-                if object_type != 2 {
-                    // draw ceiling and floor
-
-                    let y_ceiling_start = max(0, start as i32);
-                    let y_ceiling_end = min(half_window_height, last_ceiling_position_some);
-                    let ceiling_pos_delta: i32 = y_ceiling_end as i32 - y_ceiling_start;
-                    let color = max(0, min(255, (255 - i32::abs(object_distance as i32 * 30)) as i32));
-                    let mut x = 0;
-                    for position_move in (y_ceiling_start..y_ceiling_end.try_into().unwrap()).step_by(pixel_size) {
-                        let base_x = 64*4;
-                        let base_y = 64;
-                        let mut x_cor_texture = base_x+last_offset_x + (texture_start_x_delta / ceiling_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
-                        let mut y_cor_texture = base_y+last_offset_y + (texture_start_y_delta / ceiling_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
-                        x += 1;
-                        if x_cor_texture <= 1 {
-                            x_cor_texture = 1;
-                        }
-
-                        if y_cor_texture <= 1 {
-                            y_cor_texture = 1;
-                        }
-
-                        x_cor_texture = max(base_x, min(x_cor_texture, base_x+64));
-                        y_cor_texture = max(base_y, min(y_cor_texture, base_y+64));
-
-                        let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
-                        
-                        let index_red = index_base;
-                        let index_green = index_base+1;
-                        let index_blue = index_base+2;
-                        let index_alpha = index_base+3;
-                        let (red, green, blue, alpha) = (0, 0, general_texture[index_blue], general_texture[index_alpha]);
-
-                        if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT.try_into().unwrap() {
-                            canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
-                        }
-                    }
-
-                    // FLOOR
-                    let mut floor_position = 0;
-                    if let Some(position) = last_floor_position {
-                        floor_position = position;
-                    }
-                    let tile_pos_start = max(half_window_height, floor_position);
-                    let tile_pos_end = min(window_height, start as usize + wall_vertical_length_full as usize);
-                    let tile_pos_delta = tile_pos_end - tile_pos_start;
-
-                    x = 0;
-                    for position_move in (tile_pos_start..tile_pos_end).step_by(pixel_size) {
-                        let base_x = 64*4;
-                        let base_y = 64;
-                        let mut x_cor_texture = base_x+last_offset_x + (texture_start_x_delta / tile_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
-                        let mut y_cor_texture = base_y+last_offset_y + (texture_start_y_delta / tile_pos_delta as f64 * x as f64 * pixel_size as f64) as i32;
-                        x += 1;                        
-
-                        x_cor_texture = max(base_x, min(x_cor_texture, base_x+64));
-                        y_cor_texture = max(base_y, min(y_cor_texture, base_y+64));
-                       
-                        let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
-                        
-                        let index_red = index_base;
-                        let index_green = index_base+1;
-                        let index_blue = index_base+2;
-                        let index_alpha = index_base+3;
-                        let (red, green, blue, alpha) = (general_texture[index_red] / 4, general_texture[index_green] / 2, 0, general_texture[index_alpha]);
-
-                        if screen_x < WINDOW_WIDTH && position_move < WINDOW_HEIGHT.try_into().unwrap() {
-                            canvas[position_move as usize][screen_x] = (red, green, blue, alpha);
-                        }
-                    }
-                }
-            }
-
-            if object_type != 3 {  // for walls and objects  # and object_distance > 0.4
-                let object_id_with_offset = object_id + offset_x + offset_y;
-                for vertical_wall_pixel in (0..(wall_vertical_length_full) as i32).step_by(one_artificial_pixel_size.try_into().unwrap()) {
-
-                
-                    let mut y_cor_texture = (64.0 / wall_vertical_length_full * vertical_wall_pixel as f64) as i32;
-                    if object_type == 2 {
-                        y_cor_texture += 64;
-                    }
-                        
-                    let mut x_cor_texture = (object_id_with_offset * 64.0) as i32;
-
-                    if x_cor_texture <= 1 {
-                        x_cor_texture = 1;
-                    }
-
-                    x_cor_texture = max(0, min(x_cor_texture, 511));
-                    y_cor_texture = max(0, min(y_cor_texture, 127));
-                    
-                    let index_base = (y_cor_texture*512*4+x_cor_texture*4) as usize;  // X cor is 512 pixels * 4 channels
-                    let index_red = index_base;
-                    let index_green = index_base+1;
-                    let index_blue = index_base+2;
-                    let index_alpha = index_base+3;
-                    let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]); //(50 as u8,50 as u8,255 as u8,255 as u8);;//TODO FIX cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
-                    //red, green, blue, alpha = cls.pixel_data.get_at((x_cor_texture, y_cor_texture))
-
-                    let current_pixel_position = start as i32 + vertical_wall_pixel;
-                    if green > 0 {                    
-
-                        /*TODO LATER if dynamic_lighting {
-                            distance_dark_blue = (object_distance * 3) as i32;
-                            distance_dark = distance_dark_blue * 2;
-                            red -= distance_dark if red > distance_dark else red;
-                            green -= distance_dark if green > distance_dark else green;
-                            blue -= distance_dark_blue if blue > distance_dark_blue else blue;
-                        }*/
-
-                        let result_color_tuple = (red, green, blue, alpha);
-
-                        let mut pixel_position = 0;
-                        if let Some(position) = last_pixel_position {
-                            pixel_position = position;
-                        } else {
-                            pixel_position = current_pixel_position + 1;
-                        }
-                        for y in pixel_position..current_pixel_position {
-                            if y < 0 || y >= WINDOW_HEIGHT.try_into().unwrap()  {
-                                continue;
-                            }
-                                
-                            // walls                
-                            if screen_x < WINDOW_WIDTH {
-                                canvas[y as usize][screen_x] = (red, green, blue, alpha);
-                            }
-                        }
-                    }                    
-                    last_pixel_position = Some(current_pixel_position);
-                }
-            }
-            last_ceiling_position = Some(start as usize);
-            last_floor_position = Some(start as usize + wall_vertical_length_full as usize);
-        }
-    }
-    
-    /* DEBUG GENERAL TEXTURE */
-    /*for y in 0..128 {
-        for x in 0..512 {
-
-            let index_base = (y*512*4+x*4) as usize;
-            let index_red = index_base;
-            let index_green = index_base+1;
-            let index_blue = index_base+2;
-            let index_alpha = index_base+3;
-            let (red, green, blue, alpha) = (general_texture[index_red], general_texture[index_green], general_texture[index_blue],general_texture[index_alpha]);
-
-            canvas[y as usize][x] = (red, green, blue, alpha);
-        }
-    }*/
-    
-    canvas
-}
-
-
 extern crate piston_window;
 
 use piston_window::types::Color;
@@ -549,6 +538,7 @@ fn main_rust(_py: Python, text: f64) -> PyResult<f64> {
 
 
 py_module_initializer!(rustlib, |py, m | {
+    //rayon::ThreadPoolBuilder::new().num_threads(4).build_global().unwrap();
     m.add(py, "__doc__", "This module is implemented in Rust")?;
     //m.add(py, "move_ray_rust", py_fn!(py, move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64)))?;
     /*m.add(py, "get_x_cor_ordered_z_buffer_data_rust", py_fn!(py, get_x_cor_ordered_z_buffer_data_rust(player_angle: f64, 
