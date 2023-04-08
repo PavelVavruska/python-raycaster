@@ -6,6 +6,9 @@ use std::vec;
 
 use cpython::{Python, PyResult, PyBytes};
 
+use rayon::prelude::*;
+
+
 
 fn calculate_collision_to_z_buffer (
     ray_angle: f64,
@@ -82,6 +85,7 @@ fn calculate_collision_to_z_buffer (
 
 }
 
+
 fn inner_x_cor_ordered_z_buffer(player_angle: f64, 
     player_pos_x: f64, 
     player_pos_y: f64, 
@@ -96,9 +100,11 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
         let config_fov_f = config_fov as f64;
 
         let player_angle_start = player_angle - config_fov_f / 2.0;
-        let mut x_cor_z_buffer_objects: Vec<(usize, Vec<(f64,f64,f64,f64,f64,f64,usize,f64)>)> = vec![];
+        let mut x_cor_z_buffer_objects: Vec<(usize, Vec<(f64,f64,f64,f64,f64,f64,usize,f64)>)> = vec![];        
 
-        for screen_x in (0..WINDOW_WIDTH).step_by(config_pixel_size) {
+        x_cor_z_buffer_objects = (0..WINDOW_WIDTH).into_par_iter().map(|screen_x| {
+        
+        
             let mut ray_angle = player_angle_start + config_fov_f / WINDOW_WIDTH as f64 * screen_x as f64;
             
             // degrees fixed to range 0 - 359
@@ -146,8 +152,8 @@ fn inner_x_cor_ordered_z_buffer(player_angle: f64,
                 ray_position_y = obj[1];
 
             }
-            x_cor_z_buffer_objects.push((screen_x, z_buffer_objects));
-        }    
+            (screen_x, z_buffer_objects)            
+        }).collect();
 
         const BYTES_LEN: usize = WINDOW_WIDTH*WINDOW_HEIGHT*4 as usize;
         let mut result2 = [125 as u8; BYTES_LEN];
@@ -262,8 +268,7 @@ fn move_ray_rust(ray_angle: f64, ray_position_x: f64, ray_position_y: f64) -> Ve
                 ray_pos_x = ray_pos_x + ray_length_delta_x;
                 ray_pos_y -= ray_length_delta_x / f64::tan(f64::to_radians(ray_angle - 270.0));
             }               
-    }
-    //Ok(vec![ray_position_x, ray_position_y])
+    }    
     vec![ray_pos_x, ray_pos_y]
 
 }
@@ -281,7 +286,7 @@ fn draw_from_z_buffer_objects(player_angle: f64, x_cor_ordered_z_buffer_objects:
         let mut last_ceiling_position = None;
         let last_offset_x = 0;
         let last_offset_y = 0;
-        //let reverse_z_buffer_wall = z_buffer_wall.iter().rev();
+        
         for entry in z_buffer_wall.iter().rev() {
 
             // actual line by line rendering of the visible object
